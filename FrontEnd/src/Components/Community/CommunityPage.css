@@ -1,0 +1,391 @@
+/* CommunityPage.css */
+
+/* General Layout */
+.community-page-container {
+    font-family: 'Arial', sans-serif;
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+    padding: 20px;
+    max-width: 1200px;
+    margin: auto;
+    position: relative;
+}
+
+.community-page-sidebar {
+    flex: 1;
+    background: #f9f9f9;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.community-page-sidebar h2 {
+    font-size: 24px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 15px;
+}
+
+.community-page-search-bar {
+    display: flex;
+    gap: 10px;
+}
+
+.community-page-search-bar input {
+    width: 100%;
+    padding: 10px;
+    font-size: 16px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+}
+
+.community-page-btn {
+    background-color: #007bff;
+    color: white;
+    padding: 10px;
+    font-size: 16px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.community-page-btn:hover {
+    background-color: #0056b3;
+}
+
+/* Main Section - Meal List */
+.community-page-main {
+    flex: 3;
+    display: flex;
+    flex-direction: column;
+}
+
+.community-page-main h2 {
+    font-size: 28px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 20px;
+}
+
+.community-page-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.community-page-card {
+    background-color: white;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+    padding: 15px;
+    text-align: center;
+    transition: transform 0.3s;
+}
+
+.community-page-card:hover {
+    transform: scale(1.05);
+}
+
+.community-page-image {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    border-radius: 8px;
+    margin-bottom: 15px;
+}
+
+.community-page-card h3 {
+    font-size: 20px;
+    font-weight: 600;
+    color: #333;
+    margin: 10px 0;
+}
+
+.community-page-card p {
+    font-size: 16px;
+    color: #555;
+    margin-bottom: 10px;
+}
+
+.community-page-card button {
+    background-color: #007bff;
+    color: white;
+    padding: 8px 15px;
+    font-size: 14px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.community-page-card button:hover {
+    background-color: #0056b3;
+}
+
+/* Rankings Section */
+.community-page-rankings {
+    margin-top: 40px;
+    background: #f9f9f9;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.community-page-rankings h3 {
+    font-size: 24px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 15px;
+}
+
+.ranking-tabs {
+    display: flex;
+    gap: 20px;
+}
+
+.ranking-tab-btn {
+    background-color: #f1f1f1;
+    color: #333;
+    padding: 10px 20px;
+    font-size: 16px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.ranking-tab-btn:hover {
+    background-color: #ddd;
+}
+
+.ranking-list {
+    margin-top: 20px;
+}
+
+.ranking-item {
+    font-size: 18px;
+    color: #333;
+    margin-bottom: 10px;
+}
+
+/* Meal Details Popup */
+.community-page-popup-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.community-page-popup-content {
+    background-color: white;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    max-width: 900px;
+    width: 100%;
+    position: relative;
+}
+
+.community-page-popup-close {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    font-size: 30px;
+    color: #333;
+    cursor: pointer;
+}
+
+.community-page-popup-close:hover {
+    color: #e67e22;
+}
+
+.title-detail-community {
+    font-size: 26px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 20px;
+}
+
+.meal-details-community {
+    display: flex;
+    gap: 30px;
+}
+
+.popup-image-community {
+    width: 300px;
+    height: 300px;
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+.meal-info-community {
+    flex-grow: 1;
+}
+
+.meal-info-community h3 {
+    font-size: 24px;
+    color: #333;
+    margin-bottom: 10px;
+}
+
+.meal-info-community p {
+    font-size: 16px;
+    color: #555;
+    margin: 5px 0;
+}
+
+/* Review Form */
+.review-form-container {
+    margin-top: 30px;
+}
+
+.review-input, .review-textarea, .review-rating-input {
+    width: 100%;
+    padding: 10px;
+    margin: 10px 0;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+}
+
+.review-textarea {
+    resize: vertical;
+}
+
+.rating-container {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.rating-label {
+    font-size: 14px;
+    color: #777;
+}
+
+.review-submit-btn {
+    background-color: #28a745;
+    color: white;
+    padding: 10px 20px;
+    font-size: 16px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.review-submit-btn:hover {
+    background-color: #218838;
+}
+
+/* Reviews Section */
+.reviews-section {
+    margin-top: 30px;
+}
+
+.reviews-container {
+    margin-top: 20px;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.reviews-list {
+    list-style: none;
+    padding: 0;
+}
+
+.review-item {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.review-avatar-container {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    overflow: hidden;
+}
+
+.review-avatar {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.review-content {
+    flex-grow: 1;
+}
+
+.review-header {
+    font-size: 16px;
+    font-weight: 600;
+    color: #333;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.review-rating {
+    font-size: 16px;
+    color: #f39c12;
+}
+
+.review-comment {
+    font-size: 14px;
+    color: #555;
+    margin: 10px 0;
+}
+
+.review-actions {
+    display: flex;
+    gap: 15px;
+}
+
+.review-action-btn {
+    background-color: #007bff;
+    color: white;
+    padding: 5px 10px;
+    font-size: 14px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.review-action-btn:hover {
+    background-color: #0056b3;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .community-page-container {
+        padding: 15px;
+    }
+
+    .community-page-main {
+        margin-top: 30px;
+    }
+
+    .community-page-cards {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .meal-details-community {
+        flex-direction: column;
+    }
+
+    .popup-image-community {
+        width: 100%;
+        height: 250px;
+    }
+}

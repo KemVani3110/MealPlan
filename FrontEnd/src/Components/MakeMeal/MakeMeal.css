@@ -1,0 +1,766 @@
+.meal-prep-container {
+    font-family: Arial, sans-serif;
+    display: flex;
+    gap: 20px;
+    padding: 15px;
+    max-width: 1200px;
+    margin: auto;
+    margin-top: 3%;
+}
+
+.meal-prep-sidebar {
+    flex: 1;
+    background: #f9f9f9;
+    border-radius: 8px;
+    padding: 15px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    position: sticky;
+    top: 20px;
+}
+
+.meal-prep-sidebar h2 {
+    margin-bottom: 15px;
+    font-size: 18px;
+    text-align: center;
+}
+
+.meal-prep-search-bar {
+    display: flex;
+    margin-bottom: 15px;
+    border: 1px solid #ccc;
+    border-radius: 20px;
+    padding: 5px 10px;
+    background: #fff;
+}
+
+.meal-prep-search-bar input {
+    border: none;
+    outline: none;
+    flex: 1;
+}
+
+.meal-prep-search-bar button {
+    background: #007bff;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.meal-prep-selected-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-height: 300px;
+    overflow-y: auto;
+    padding-right: 5px;
+}
+
+.meal-prep-selected-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: white;
+    padding: 10px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.meal-prep-quantity-control {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.meal-prep-remove-btn {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 5px 10px;
+    cursor: pointer;
+}
+
+.meal-prep-remove-btn:hover {
+    background-color: #c82333;
+}
+
+.meal-prep-summary {
+    margin-top: 20px;
+    padding: 10px;
+    background: #f1f1f1;
+    border-radius: 8px;
+    font-size: 14px;
+}
+
+.meal-prep-summary p {
+    margin: 5px 0;
+}
+
+.meal-prep-total {
+    font-weight: bold;
+}
+
+.meal-prep-main-section {
+    flex: 2;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.meal-prep-form-section {
+    background: #f1f1f1;
+    border-radius: 8px;
+    padding: 15px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.meal-prep-gallery {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.meal-prep-search {
+    display: flex;
+    border: 1px solid #ccc;
+    border-radius: 20px;
+    padding: 5px 10px;
+    background: #fff;
+}
+
+.meal-prep-search input {
+    border: none;
+    outline: none;
+    flex: 1;
+}
+
+.meal-prep-search button {
+    background: #007bff;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.meal-prep-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 10px;
+    overflow-y: auto;
+    max-height: 500px;
+}
+
+.meal-prep-card {
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    text-align: center;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    padding: 10px;
+    transition: transform 0.3s;
+    cursor: pointer;
+}
+
+.meal-prep-card:hover {
+    transform: scale(1.05);
+}
+
+.meal-prep-image {
+    width: 100%;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 6px;
+}
+
+.meal-prep-card button {
+    margin-top: 10px;
+    padding: 8px;
+    background-color: #28a745;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.meal-prep-card button:hover {
+    background-color: #218838;
+}
+
+/* MakeMeal.css */
+
+/* Pop-up Overlay */
+.meal-prep-popup-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+/* Close Button */
+.meal-prep-popup-close {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: none;
+    border: none;
+    font-size: 40px;
+    color: #555;
+    cursor: pointer;
+}
+
+.meal-prep-popup-close:hover {
+    color: #ff4d4d;
+}
+
+/* Pop-up Text */
+.meal-prep-popup-content h3 {
+    font-size: 22px;
+    margin-bottom: 10px;
+    color: #333;
+}
+
+.meal-prep-popup-content p {
+    font-size: 14px;
+    color: #555;
+    margin: 5px 0;
+}
+
+.meal-prep-popup-content ul {
+    list-style: none;
+    padding: 0;
+    margin-top: 15px;
+    text-align: left;
+    width: 100%;
+}
+
+.meal-prep-popup-content ul li {
+    font-size: 13px;
+    color: #555;
+    padding: 8px 0;
+    border-bottom: 1px solid #ddd;
+}
+
+/* Fade-in Animation */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.8);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* Calorie Highlighting */
+.calorie-excess {
+    color: #28a745;
+    font-weight: bold;
+}
+
+.calorie-deficit {
+    color: #dc3545;
+    font-weight: bold;
+}
+
+/* Quantity Control Section */
+.meal-prep-quantity-control {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 10px 0;
+}
+
+.meal-prep-quantity-control button {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    width: 30px;
+    height: 30px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.meal-prep-quantity-control button:hover {
+    background-color: #0056b3;
+}
+
+.meal-prep-quantity-control input {
+    width: 50px;
+    text-align: center;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    padding: 5px;
+    font-size: 14px;
+}
+
+/* Form Section */
+.meal-prep-form-section {
+    background: #f9f9f9;
+    border-radius: 20px;
+    padding: 20px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    margin-bottom: 20px;
+}
+
+.meal-prep-form-section h2 {
+    text-align: center;
+    margin-bottom: 15px;
+    font-size: 20px;
+    color: #333;
+}
+
+.meal-prep-form-section label {
+    font-size: 14px;
+    color: #555;
+    margin-bottom: 5px;
+    display: block;
+}
+
+.meal-prep-form-section input[type="checkbox"] {
+    margin-right: 8px;
+}
+
+/* Buttons */
+.meal-prep-btn {
+    background-color: #28a745;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 16px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.meal-prep-btn:hover {
+    background-color: #218838;
+}
+
+.meal-prep-remove-btn {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 5px 10px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.meal-prep-remove-btn:hover {
+    background-color: #c82333;
+}
+
+/* Selected Meals Section */
+.meal-prep-selected-item p {
+    margin: 5px 0;
+}
+
+.meal-prep-summary p {
+    font-size: 14px;
+    margin: 8px 0;
+    text-align: center;
+    color: #333;
+}
+
+.icon-btn-makemeal {
+    background-color: white;
+    font-size: 18px;
+    /* Smaller font size */
+    padding: 5px 8px;
+    /* Smaller padding */
+    border: none;
+    /* Remove the border */
+    border-radius: 5px;
+    /* Optional: rounded corners */
+    cursor: pointer;
+    /* Pointer cursor on hover */
+}
+
+.reviews-container h4 {
+    font-size: 24px;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 20px;
+}
+
+.reviews-list {
+    list-style: none;
+    padding: 0;
+}
+
+.review-item {
+    display: flex;
+    align-items: flex-start;
+    padding: 15px;
+    margin-bottom: 15px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s ease-in-out;
+}
+
+.review-item:hover {
+    transform: translateY(-5px);
+}
+
+.review-avatar-container {
+    margin-right: -20px;
+}
+
+.review-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.review-content {
+    flex-grow: 1;
+}
+
+.review-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.review-rating {
+    font-size: 18px;
+    color: #f39c12;
+}
+
+.review-comment {
+    font-size: 16px;
+    color: #555;
+    margin-bottom: 10px;
+}
+
+.review-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.review-action-btn {
+    background-color: #fff;
+    border: 1px solid #ddd;
+    padding: 5px 10px;
+    font-size: 14px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.review-action-btn:hover {
+    background-color: #f0f0f0;
+}
+
+.review-form-container {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    margin-top: 30px;
+}
+
+.review-form-container h5 {
+    font-size: 20px;
+    margin-bottom: 15px;
+    color: #333;
+}
+
+.review-input,
+.review-textarea,
+.review-rating-input {
+    width: 100%;
+    padding: 10px;
+    font-size: 16px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    margin-bottom: 15px;
+    transition: border-color 0.3s;
+}
+
+.review-input:focus,
+.review-textarea:focus,
+.review-rating-input:focus {
+    border-color: #f39c12;
+    outline: none;
+}
+
+.review-textarea {
+    resize: vertical;
+}
+
+.rating-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.rating-label {
+    font-size: 16px;
+    color: #333;
+}
+
+.review-submit-btn {
+    background-color: #f39c12;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    font-size: 16px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.review-submit-btn:hover {
+    background-color: #e67e22;
+}
+
+
+
+
+
+
+
+
+/* dcdcdcdcdc */
+.meal-prep-popup-content {
+    max-width: 1100px;
+    /* Increased width for more space */
+    margin: 0 auto;
+    padding: 20px;
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    position: relative;
+    overflow: hidden;
+}
+
+.popup-image-makemeal {
+    max-width: 250px;
+    /* Increased image size */
+    height: 100px;
+    border-radius: 10px;
+    object-fit: cover;
+    margin-right: 20px;
+    /* Added margin to space out the image from the text */
+}
+
+.meal-details-makemeal {
+    display: flex;
+    gap: 20px;
+    /* Reduced gap between image and text */
+    margin-bottom: 20px;
+}
+
+.meal-info-makemeal .meal-h3 {
+    font-size: 26px;
+    /* Slightly larger font size */
+    margin-bottom: 10px;
+    color: #333;
+}
+
+.meal-info-makemeal .meal-p {
+    font-size: 16px;
+    color: #555;
+    margin-bottom: 10px;
+}
+
+.meal-actions-makemeal {
+    display: flex;
+    gap: 12px;
+    /* Reduced gap between action buttons */
+}
+
+.ingredients-reviews {
+    display: flex;
+    gap: 20px;
+    /* Reduced gap between ingredients and reviews sections */
+}
+
+.ingredients-section,
+.reviews-section {
+    flex: 1;
+}
+
+.ingredients-section h4,
+.reviews-section h4 {
+    font-size: 22px;
+    color: #333;
+    margin-bottom: 10px;
+}
+
+.ingredients-section ul {
+    list-style: none;
+    padding: 0;
+}
+
+.ingredients-section li {
+    font-size: 16px;
+    color: #555;
+    margin-bottom: 5px;
+}
+
+.reviews-container {
+    background-color: #f9f9f9;
+    padding: 18px;
+    /* Slightly reduced padding */
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.reviews-list {
+    list-style: none;
+    padding: 0;
+    margin-bottom: 15px;
+    /* Reduced margin for more compactness */
+}
+
+.review-item {
+    display: flex;
+    gap: 15px;
+    padding: 12px;
+    /* Reduced padding to compact the item */
+    margin-bottom: 12px;
+    /* Reduced margin between review items */
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.review-avatar-container {
+    width: 55px;
+    /* Slightly larger avatar */
+    height: 55px;
+    overflow: hidden;
+    border-radius: 50%;
+}
+
+.review-avatar {
+    width: 70%;
+    height: 70%;
+    object-fit: cover;
+}
+
+.review-content {
+    flex: 1;
+}
+
+.review-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.review-rating {
+    font-size: 18px;
+    color: #f39c12;
+}
+
+.review-comment {
+    font-size: 16px;
+    color: #555;
+    margin-bottom: 10px;
+}
+
+.review-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.review-action-btn {
+    background-color: #fff;
+    border: 1px solid #ddd;
+    padding: 6px 12px;
+    /* Adjusted button size */
+    font-size: 14px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.review-action-btn:hover {
+    background-color: #f0f0f0;
+}
+
+.review-form-container {
+    background-color: #fff;
+    padding: 18px;
+    /* Reduced padding for a more compact form */
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.review-form-container h5 {
+    font-size: 20px;
+    margin-bottom: 15px;
+    color: #333;
+}
+
+.review-input,
+.review-textarea,
+.review-rating-input {
+    width: 100%;
+    padding: 10px;
+    font-size: 16px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    margin-bottom: 15px;
+}
+
+.review-submit-btn {
+    background-color: #f39c12;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    font-size: 16px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.review-submit-btn:hover {
+    background-color: #e67e22;
+}
+
+.title-detail-makemeal {
+    text-align: center;
+    /* Căn giữa tiêu đề */
+    font-size: 32px;
+    /* Tăng kích thước chữ */
+    font-weight: 700;
+    /* Làm cho chữ đậm hơn */
+    font-family: 'Roboto', sans-serif;
+    /* Chọn kiểu chữ hiện đại */
+    color: #333;
+    /* Màu chữ tối cho dễ đọc */
+    letter-spacing: 1px;
+    /* Thêm khoảng cách giữa các chữ để chữ rõ ràng hơn */
+    margin-bottom: 20px;
+    /* Thêm khoảng cách dưới tiêu đề để các phần sau không sát nhau */
+    color: #e67e22;
+}

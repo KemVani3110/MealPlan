@@ -1,0 +1,513 @@
+/* Tổng thể */
+.ingredient-form {
+    max-width: 1000px;
+    margin: 20px auto;
+    padding: 20px;
+    border: 2px solid #4a4a4a;
+    /* Đường viền xám đậm */
+    border-radius: 10px;
+    /* Bo tròn các góc của khung viền */
+    background-color: #ffffff;
+    /* Màu nền trắng cho form */
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    /* Thêm bóng cho form */
+    margin-top: 4%;
+}
+
+.ingredient-h1 {
+    text-align: center;
+    margin-bottom: 20px;
+    color: #333;
+    font-size: 28px;
+    /* Tăng kích thước tiêu đề */
+}
+
+.search-bar-ingredient {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+.search-bar-ingredient input {
+    width: 80%;
+    padding: 12px;
+    border: 2px solid #ccc;
+    border-radius: 5px;
+    font-size: 16px;
+    transition: border-color 0.3s;
+    /* Hiệu ứng chuyển tiếp cho border */
+}
+
+.search-bar-ingredient input:focus {
+    border-color: #007bff;
+    /* Đổi màu border khi focus */
+}
+
+/* Button nhóm */
+.button-group-ingredient {
+    display: flex;
+    justify-content: flex-start;
+    /* Căn bắt đầu từ trái */
+    align-items: center;
+    /* Căn giữa theo chiều dọc */
+    gap: 10px;
+    /* Khoảng cách giữa các nút */
+    margin-bottom: 20px;
+    /* Khoảng cách dưới */
+}
+
+.add-dish-btn,
+.sort-btn {
+    padding: 10px 16px;
+    /* Kích thước nút gọn hơn */
+    font-size: 16px;
+    /* Kích thước chữ vừa phải */
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s;
+}
+
+.add-dish-btn {
+    background-color: #5cb85c;
+    /* Màu xanh lá */
+    color: white;
+}
+
+.add-dish-btn:hover {
+    background-color: #4cae4c;
+    /* Màu xanh lá đậm khi hover */
+}
+
+.sort-btn {
+    background-color: #007bff;
+    /* Màu xanh dương */
+    color: white;
+}
+
+.sort-btn:hover {
+    background-color: #0056b3;
+    /* Màu xanh dương đậm khi hover */
+}
+
+/* Card danh sách món ăn */
+.dishes-list {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 20px;
+    /* Khoảng cách giữa các món ăn */
+    max-width: 1200px;
+    margin: 0 auto;
+    /* Căn giữa danh sách món ăn */
+}
+
+.dish-card {
+    background-color: #ffffff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    overflow: hidden;
+    text-align: center;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+    padding: 20px;
+    /* Tăng padding để card rộng hơn */
+    flex: 0 1 calc(33.333% - 40px);
+    /* Điều chỉnh để có 3 món trên hàng */
+    max-width: calc(33.333% - 40px);
+    /* Giới hạn chiều rộng tối đa */
+    transition: transform 0.2s;
+}
+
+.dish-card:hover {
+    transform: translateY(-5px);
+}
+
+.dish-card img {
+    width: 100%;
+    height: 180px;
+    /* Tăng chiều cao của hình ảnh */
+    object-fit: cover;
+    border-radius: 5px;
+    margin-bottom: 15px;
+}
+
+.dish-card h3 {
+    font-size: 20px;
+    /* Tăng kích thước chữ tiêu đề */
+    color: #333;
+    margin-bottom: 10px;
+}
+
+.dish-card p {
+    font-size: 16px;
+    /* Tăng kích thước chữ mô tả */
+    color: #666;
+    margin: 5px 0;
+}
+
+.card-buttons {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 15px;
+}
+
+.card-buttons button {
+    padding: 10px 18px;
+    /* Tăng kích thước nút */
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.3s ease;
+    margin: 3px;
+}
+
+.card-buttons button:first-child {
+    background-color: #007bff;
+    /* Màu xanh dương cho nút chi tiết */
+    color: white;
+}
+
+.card-buttons button:first-child:hover {
+    background-color: #0056b3;
+    /* Màu xanh dương đậm khi hover */
+}
+
+.card-buttons button:last-child {
+    background-color: #d9534f;
+    /* Màu đỏ cho nút xóa */
+    color: white;
+}
+
+.card-buttons button:last-child:hover {
+    background-color: #c9302c;
+    /* Màu đỏ đậm khi hover */
+}
+
+/* Modal */
+.modal-ingredient {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+
+.modal-content-ingredient {
+    background: #ffffff;
+    padding: 30px;
+    /* Tăng padding cho nội dung modal */
+    border-radius: 10px;
+    width: 600px;
+    /* Đặt chiều rộng modal */
+    max-width: 90%;
+    /* Đảm bảo modal không vượt quá chiều rộng màn hình */
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    animation: modal-fade-in 0.3s ease-in-out;
+}
+
+@keyframes modal-fade-in {
+    from {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.modal-content-ingredient h2 {
+    text-align: center;
+    color: #333;
+    margin-bottom: 20px;
+}
+
+.modal-content-ingredient img {
+    width: 100%;
+    /* Đảm bảo hình ảnh chiếm toàn bộ chiều rộng modal */
+    height: auto;
+    /* Chiều cao tự động để giữ tỷ lệ */
+    max-height: 300px;
+    /* Giới hạn chiều cao tối đa của hình ảnh */
+    object-fit: cover;
+    /* Đảm bảo hình ảnh không bị méo */
+    border-radius: 5px;
+    margin-bottom: 15px;
+}
+
+.modal-content-ingredient input,
+.modal-content-ingredient textarea {
+    width: 100%;
+    padding: 12px;
+    /* Tăng padding cho input và textarea */
+    margin-bottom: 15px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 14px;
+    transition: border-color 0.3s;
+    /* Hiệu ứng chuyển tiếp cho border */
+}
+
+.modal-content-ingredient input:focus,
+.modal-content-ingredient textarea:focus {
+    border-color: #007bff;
+    /* Đổi màu border khi focus */
+}
+
+.modal-buttons {
+    display: flex;
+    justify-content: space-between;
+}
+
+.modal-buttons button {
+    padding: 12px 20px;
+    /* Tăng kích thước nút trong modal */
+    font-size: 16px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.modal-buttons button:first-child {
+    background-color: #5cb85c;
+    /* Màu xanh lá cho nút thêm */
+    color: white;
+}
+
+.modal-buttons button:first-child:hover {
+    background-color: #4cae4c;
+    /* Màu xanh lá đậm khi hover */
+}
+
+.modal-buttons button:last-child {
+    background-color: #d9534f;
+    /* Màu đỏ cho nút hủy */
+    color: white;
+}
+
+.modal-buttons button:last-child:hover {
+    background-color: #c9302c;
+    /* Màu đỏ đậm khi hover */
+}
+
+.selected-ingredients-list {
+    list-style-type: none;
+    /* Xóa dấu đầu dòng */
+    padding: 0;
+    /* Xóa padding */
+    margin: 0;
+    /* Xóa margin */
+}
+
+.ingredient-item {
+    display: flex;
+    /* Sử dụng flexbox để căn chỉnh */
+    justify-content: space-between;
+    /* Căn chỉnh giữa các phần tử */
+    align-items: center;
+    /* Căn giữa theo chiều dọc */
+    margin-bottom: 15px;
+    /* Khoảng cách giữa các nguyên liệu */
+    padding: 10px;
+    /* Padding cho mỗi nguyên liệu */
+    border: 1px solid #ccc;
+    /* Đường viền cho mỗi nguyên liệu */
+    border-radius: 5px;
+    /* Bo góc cho đường viền */
+    background-color: #f9f9f9;
+    /* Màu nền cho mỗi nguyên liệu */
+    transition: background-color 0.3s;
+    /* Hiệu ứng chuyển tiếp cho màu nền */
+}
+
+.ingredient-item:hover {
+    background-color: #e0e0e0;
+    /* Màu nền khi hover */
+}
+
+.gram-input {
+    width: 60px;
+    /* Đặt chiều rộng cho ô nhập số */
+    padding: 5px;
+    /* Padding cho ô nhập số */
+    margin-left: 10px;
+    /* Khoảng cách bên trái cho ô nhập số */
+    border: 1px solid #ccc;
+    /* Đường viền cho ô nhập số */
+    border-radius: 5px;
+    /* Bo góc cho ô nhập số */
+}
+
+.remove-btn {
+    background-color: #d9534f;
+    /* Màu đỏ */
+    color: white;
+    padding: 5px 10px;
+    /* Kích thước nút */
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.remove-btn:hover {
+    background-color: #c9302c;
+    /* Màu đỏ đậm khi hover */
+}
+
+.dropdown {
+    position: relative;
+}
+
+.dropdown ul {
+    position: absolute;
+    background-color: white;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    padding: 0;
+    margin: 0;
+    list-style: none;
+    width: 100%;
+    max-height: 200px;
+    /* Giới hạn chiều cao của dropdown */
+    overflow-y: auto;
+    /* Thêm thanh cuộn nếu cần */
+    z-index: 1000;
+    /* Đảm bảo dropdown nằm trên các phần tử khác */
+}
+
+.dropdown li {
+    padding: 10px;
+    cursor: pointer;
+}
+
+.dropdown li:hover {
+    background-color: #007bff;
+    /* Màu nền khi hover */
+    color: white;
+    /* Đổi màu chữ khi hover */
+}
+
+/* Dish Detail Modal */
+.dish-detail-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    /* Slightly darker background for better contrast */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+
+.dish-detail-modal-content {
+    background: #ffffff;
+    padding: 20px;
+    border-radius: 10px;
+    width: 600px;
+    /* Set width for the dish detail modal */
+    max-width: 90%;
+    /* Ensure it doesn't exceed screen width */
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    animation: modal-fade-in 0.3s ease-in-out;
+}
+
+.dish-detail-modal-content h2 {
+    text-align: center;
+    color: #333;
+    margin-bottom: 15px;
+    font-size: 24px;
+    /* Increase font size for the title */
+}
+
+.dish-detail-modal-content img {
+    width: 100%;
+    height: auto;
+    /* Maintain aspect ratio */
+    border-radius: 10px;
+    /* Rounded corners for the image */
+    margin-bottom: 15px;
+}
+
+.dish-detail-modal-content p {
+    color: #666;
+    margin: 5px 0;
+    /* Add margin for spacing */
+    font-size: 16px;
+    /* Slightly larger font size */
+}
+
+.dish-detail-modal-content .dish-info {
+    display: flex;
+    justify-content: space-between;
+    /* Space between price and calories */
+    margin-top: 10px;
+    /* Add margin above the dish info */
+    font-weight: bold;
+    /* Make text bold */
+}
+
+.dish-detail-modal-content .ingredient-list {
+    list-style-type: none;
+    /* Remove bullet points */
+    padding: 0;
+    /* Remove padding */
+    margin: 10px 0;
+    /* Add margin for spacing */
+}
+
+.dish-detail-modal-content .ingredient-item {
+    padding: 8px;
+    /* Padding for ingredient items */
+    border: 1px solid #ddd;
+    /* Light border for ingredient items */
+    border-radius: 5px;
+    /* Rounded corners */
+    background-color: #f9f9f9;
+    /* Light background color */
+    margin-bottom: 5px;
+    /* Margin between ingredients */
+}
+
+.dish-detail-modal-content .close-btn {
+    background-color: #5cb85c;
+    /* Green color for close button */
+    color: white;
+    padding: 10px 15px;
+    /* Padding for button */
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    display: block;
+    /* Center the button */
+    margin: 20px auto 0;
+    /* Center the button with margin */
+}
+
+.dish-detail-modal-content .close-btn:hover {
+    background-color: #4cae4c;
+    /* Darker green on hover */
+}
+
+.price-calories-input {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+    /* Thêm khoảng cách giữa các trường */
+}
+
+.price-calories-input input {
+    margin-right: 5px;
+    /* Khoảng cách giữa ô input và nhãn */
+}

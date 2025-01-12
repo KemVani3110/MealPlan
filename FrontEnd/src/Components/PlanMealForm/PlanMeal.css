@@ -1,0 +1,512 @@
+body {
+    font-family: 'Poppins', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 20px;
+    /* background: linear-gradient(135deg, #74ebd5 0%, #acb6e5 100%); */
+    color: #333;
+    min-height: 100vh;
+    overflow-y: auto;
+}
+
+h1 {
+    text-align: center;
+    color: #333;
+    font-size: 2.8rem;
+    font-weight: bold;
+    margin-bottom: 30px;
+}
+
+.date-range {
+    margin-top: 15px;
+    text-align: center;
+    margin-bottom: 30px;
+    color: #555;
+    font-size: 1.1rem;
+}
+
+table {
+    width: 90%;
+    border-collapse: collapse;
+    margin: 0 auto;
+    background-color: #fff;
+    box-shadow: 0px 8px 30px rgba(0, 0, 0, 0.1);
+    border-radius: 15px;
+    overflow: hidden;
+}
+
+th,
+td {
+    padding: 20px;
+    text-align: center;
+    border: 1px solid #e3e6ea;
+}
+
+th {
+    background-color: #70c1b3;
+    color: white;
+    font-size: 1.2rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+td {
+    background-color: #f8f9fc;
+}
+
+tbody tr:nth-child(even) td {
+    background-color: #e9f7f9;
+}
+
+button.open-modal-btn {
+    padding: 12px 24px;
+    background-color: #ff8a5c;
+    color: white;
+    border: none;
+    border-radius: 50px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: background-color 0.3s ease, transform 0.2s;
+}
+
+button.open-modal-btn:hover {
+    background-color: #ff6b35;
+    transform: translateY(-2px);
+}
+
+/* Modal styles */
+.modal-makemeal {
+    display: none;
+    position: fixed;
+    z-index: 100;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    animation: fadeIn 0.4s;
+
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+.modal-content {
+    background-color: white;
+    margin: 5% auto;
+    padding: 30px;
+    border-radius: 20px;
+    width: 45%;
+    box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.3);
+    max-height: 90vh;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    padding-top: 50px;
+}
+
+.modal-footer {
+    position: sticky;
+    bottom: 0;
+    background-color: rgba(255, 255, 255, 0.8);
+    /* Màu nền trong suốt */
+    padding-top: 15px;
+    padding-bottom: 15px;
+    text-align: center;
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+    border-top: 1px solid rgba(227, 230, 234, 0.5);
+    /* Viền trên cũng trong suốt */
+}
+
+
+button[type="button"] {
+    padding: 12px 24px;
+    background-color: #ff8a5c;
+    color: white;
+    border: none;
+    border-radius: 15px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: background-color 0.3s ease, transform 0.2s;
+}
+
+
+.close-btn {
+    left: 25%;
+    float: right;
+    font-size: 35px;
+    cursor: pointer;
+    color: #000000;
+    position: fixed;
+    z-index: 10;
+}
+
+.close-btn:hover {
+    color: #333;
+}
+
+.quantity-control {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 160px;
+}
+
+button {
+    padding: 12px;
+    background-color: #f4f4f4;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+button:hover {
+    background-color: #ddd;
+}
+
+input[type="number"] {
+    width: 100%;
+    padding: 12px;
+    margin: 12px 0;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: border-color 0.3s ease;
+    text-align: center;
+}
+
+#search {
+    width: 100%;
+    padding: 12px;
+    margin: 12px 0;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: border-color 0.3s ease;
+    text-align: center;
+}
+
+input[type="number1"] {
+    width: 10%;
+    padding: 12px;
+    margin: 12px 0;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: border-color 0.3s ease;
+    text-align: center;
+}
+
+
+/* ----------------DẤU X RESET SEARCH VÀ TEN MON AN TRONG POP-UP------------------ */
+
+.button-row {
+    display: flex;
+    /* Sử dụng Flexbox để căn chỉnh ngang */
+    align-items: center;
+    /* Căn giữa theo trục dọc */
+    gap: 8px;
+    /* Khoảng cách giữa các nút */
+}
+
+.reset-icon {
+    padding: 8px 12px;
+    border: none;
+    border-radius: 4px;
+    color: white;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.reset-icon:hover {
+    background-color: #2e7d32;
+    /* Màu xanh đậm hơn khi hover */
+}
+
+.meal-options {
+    display: flex;
+    /* Đặt Flexbox cho các nút trong Meal Options */
+    flex-wrap: wrap;
+    /* Cho phép xuống dòng nếu quá dài */
+    gap: 5px;
+    /* Khoảng cách giữa các nút */
+}
+
+/* ------------------------------------------------------------------------------- */
+
+
+input[type="text"]:focus,
+input[type="number"]:focus {
+    border-color: #70c1b3;
+}
+
+.main {
+    /* background: linear-gradient(135deg, #74ebd5 0%, #acb6e5 100%); */
+    padding: 50px;
+    margin-top: -3%;
+}
+
+.ingredient-list {
+    list-style-type: none;
+}
+
+.reset-btn,
+.edit-btn {
+    margin-left: 5px;
+    background: none;
+    border: none;
+    cursor: pointer;
+}
+
+.edit-btn:hover {
+    color: blue;
+}
+
+.plan-tabs {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.plan-tab {
+    padding: 8px 16px;
+    background-color: #f0f0f0;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.plan-tab.active {
+    background-color: #4caf50;
+    color: white;
+}
+
+.plan-tab.new {
+    background-color: #2196f3;
+    color: white;
+}
+
+
+
+/* lat trang sach */
+.meal-plan-container {
+    margin-left: 5%;
+    perspective: 1000px;
+}
+
+.meal-plan {
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform 0.6s ease;
+}
+
+.meal-plan.flip {
+    transform: rotateY(180deg);
+}
+
+.plan-front,
+.plan-back {
+    position: absolute;
+    width: 100%;
+    backface-visibility: hidden;
+}
+
+.plan-back {
+    transform: rotateY(180deg);
+}
+
+.plan-tab-container {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.delete-plan-btn {
+    background-color: rgb(208, 117, 117);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* #has-children {
+    background-color: red;
+} */
+.side-popup {
+    position: fixed;
+    top: 50%;
+    right: 0;
+    transform: translateY(-50%);
+    width: 300px;
+    background-color: white;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    border-radius: 8px 0 0 8px;
+    padding: 20px;
+    z-index: 200;
+    overflow-y: auto;
+}
+
+.close-side-popup-btn {
+    display: block;
+    margin-top: 20px;
+    padding: 10px 20px;
+    background-color: #ff8a5c;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.close-side-popup-btn:hover {
+    background-color: #ff6b35;
+}
+
+.open-side-popup-btn {
+    margin-left: 2px;
+    margin-top: 15px;
+    padding: 10px 20px;
+    background-color: #4caf50;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.open-side-popup-btn:hover {
+    background-color: #388e3c;
+}
+
+.selected-meal-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+    position: relative;
+    /* Để định vị nút xóa trong thẻ */
+    padding: 5px 10px;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.remove-meal-btn {
+    position: absolute;
+    top: 50%;
+    right: 10px;
+    transform: translateY(-50%);
+    background: #f44336;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.3s ease;
+}
+
+.remove-meal-btn:hover {
+    background: #d32f2f;
+}
+
+.selected-meal-item img {
+    margin-right: 10px;
+    border: 1px solid #ddd;
+    padding: 3px;
+}
+
+.selected-meal-item span {
+    font-size: 14px;
+    color: #333;
+}
+
+.date-range {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    padding: 20px;
+    margin: 20px auto;
+    width: 80%;
+    background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
+    border-radius: 15px;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+    color: white;
+    font-family: 'Poppins', sans-serif;
+}
+
+.date-range label {
+    font-size: 1.3rem;
+    font-weight: 500;
+}
+
+.date-range input[type="date"] {
+    padding: 12px;
+    font-size: 1rem;
+    border: none;
+    border-radius: 8px;
+    outline: none;
+    background: #ffffff;
+    color: #333;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    transition: all 0.3s ease;
+    width: 180px;
+}
+
+.date-range input[type="date"]:focus {
+    background: #e3f2fd;
+    box-shadow: 0 0 10px #29b6f6, 0 0 40px #29b6f6;
+    transform: scale(1.1);
+}
+
+.titleFirst {
+    text-align: center;
+    font-size: 3rem;
+    font-weight: bold;
+    color: #ffffff;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
+    -webkit-background-clip: text;
+    color: transparent;
+    text-shadow: 0 5px 10px rgba(0, 0, 0, 0.3);
+}
+
+.titleSec {
+    text-align: center;
+    font-size: 1.5rem;
+    color: #41bff5;
+    margin-bottom: 30px;
+    font-family: 'Roboto Mono', monospace;
+}
+
+.date-range::before {
+    content: '';
+    position: absolute;
+    z-index: -1;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    height: 100%;
+    filter: blur(20px);
+    border-radius: 15px;
+}

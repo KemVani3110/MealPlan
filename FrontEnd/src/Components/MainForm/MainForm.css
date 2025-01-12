@@ -1,0 +1,613 @@
+/* MainForm.css */
+
+/* Global Styles */
+body {
+  font-family: 'Arial', sans-serif;
+  margin: 0;
+  padding: 0;
+  background-color: #f4f4f9;
+  transition: background-color 0.3s ease;
+}
+
+/* Notification Section */
+.notification-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1000;
+}
+
+.notification-icon {
+  font-size: 24px;
+  cursor: pointer;
+  color: #007bff;
+}
+
+.notifications-panel {
+  position: absolute;
+  top: 40px;
+  right: 0;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  padding: 15px;
+  width: 300px;
+  animation: slideDown 0.3s ease;
+}
+
+.notifications-panel h4 {
+  font-size: 18px;
+  margin-bottom: 15px;
+  color: #333;
+  text-align: center;
+}
+
+.notification-item {
+  margin-bottom: 10px;
+  padding: 10px;
+  background-color: #f9f9f9;
+  border-radius: 6px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  color: #555;
+  transition: transform 0.2s ease;
+}
+
+.notification-item:hover {
+  transform: scale(1.02);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.notification-item h5 {
+  font-size: 16px;
+  color: #007bff;
+  margin-bottom: 5px;
+}
+
+/* Welcome Section */
+.welcome-section {
+  position: relative;
+  text-align: center;
+  color: white;
+  overflow: hidden;
+}
+
+.carousel {
+  position: relative;
+  height: 400px;
+  width: 100%;
+  overflow: hidden;
+}
+
+.carousel-slide {
+  width: 100%;
+  height: 400px;
+  background-size: cover;
+  background-position: center;
+  position: absolute;
+  top: 0;
+  left: 100%;
+  opacity: 0;
+  transition: all 1s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+}
+
+.carousel-slide.active {
+  left: 0;
+  opacity: 1;
+  z-index: 1;
+}
+
+.carousel-dots {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 10px;
+}
+
+.dot {
+  width: 14px;
+  height: 14px;
+  background-color: #ddd;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.dot.active {
+  background-color: #007bff;
+}
+
+.search-container {
+  margin-top: 20px;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+
+.search-bar {
+  width: 300px;
+  padding: 10px;
+  border: none;
+  border-radius: 5px;
+}
+
+.search-btn {
+  background-color: #28a745;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+/* Statistics Section */
+.stats-section {
+  display: flex;
+  justify-content: space-around;
+  padding: 30px 20px;
+  background-color: #fff;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  margin: 20px;
+  border-radius: 10px;
+}
+
+.stat-card {
+  text-align: center;
+  background-color: #f9f9f9;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.stat-card h3 {
+  font-size: 28px;
+  color: #007bff;
+}
+
+/* Features Section */
+.features-section {
+  display: flex;
+  justify-content: space-around;
+  flex-wrap: wrap;
+  padding: 30px 20px;
+}
+
+.feature-card {
+  width: 300px;
+  text-align: center;
+  background-color: #fff;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  margin: 10px;
+  animation: popIn 0.5s ease-in-out;
+}
+
+@keyframes popIn {
+  from {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.feature-card h4 {
+  font-size: 20px;
+  color: #333;
+  margin-bottom: 10px;
+}
+
+.feature-card p {
+  font-size: 14px;
+  margin-bottom: 15px;
+}
+
+.feature-btn {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.feature-btn:hover {
+  background-color: #0056b3;
+}
+
+@keyframes slideDown {
+  from {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+
+/* cscscscscscscscscscscscs */
+/* Trending food section */
+.trending-food-wrapper {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 400px;
+}
+
+.trending-food-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(0, 0, 0, 0.5);
+  color: white;
+  border: none;
+  font-size: 24px;
+  padding: 10px;
+  cursor: pointer;
+  z-index: 10;
+  transition: background 0.3s ease;
+}
+
+.prev-btn {
+  left: 20%;
+}
+
+.next-btn {
+  right: 20%;
+}
+
+.trending-food-btn:hover {
+  background: rgba(0, 0, 0, 0.8);
+}
+
+.trending-food-carousel {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+}
+
+.trending-food-card {
+  position: absolute;
+  transition: transform 0.7s ease, opacity 0.7s ease, z-index 0.7s ease;
+  width: 200px;
+  height: 250px;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 10px 15px rgba(0, 0, 0, 0.2);
+  opacity: 0.6;
+}
+
+.trending-food-card img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.trending-food-price {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: #ff5722;
+  color: white;
+  padding: 5px 10px;
+  border-radius: 20px;
+  font-size: 14px;
+}
+
+.trending-food-name {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  background: rgba(0, 0, 0, 0.5);
+  color: white;
+  padding: 5px;
+  border-radius: 5px;
+  font-size: 14px;
+}
+
+.trending-food-card.active {
+  transform: translateX(0) scale(1.2);
+  opacity: 1;
+  z-index: 3;
+}
+
+.trending-food-card.prev-1 {
+  transform: translateX(-130%) scale(0.9);
+  z-index: 2;
+}
+
+.trending-food-card.prev-2 {
+  transform: translateX(-250%) scale(0.8);
+  z-index: 1;
+}
+
+.trending-food-card.next-1 {
+  transform: translateX(130%) scale(0.9);
+  z-index: 2;
+}
+
+.trending-food-card.next-2 {
+  transform: translateX(250%) scale(0.8);
+  z-index: 1;
+}
+
+/* Hiệu ứng tuyết rơi */
+.snowfall-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  z-index: -1;
+}
+
+.snowflake {
+  position: absolute;
+  background-size: cover;
+  background-repeat: no-repeat;
+  animation: fall linear infinite;
+}
+
+/* Hiệu ứng rơi cơ bản */
+@keyframes fall {
+  0% {
+    transform: translateY(-100%);
+    opacity: 1;
+  }
+
+  100% {
+    transform: translateY(100vh);
+    opacity: 0;
+  }
+}
+
+/* Hiệu ứng rơi xoay */
+@keyframes fall-spin {
+  0% {
+    transform: translateY(-100%) rotate(0deg);
+    opacity: 1;
+  }
+
+  100% {
+    transform: translateY(100vh) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+/* Hiệu ứng đèn Noel */
+.christmas-lights {
+  position: fixed;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 10px;
+  z-index: 1;
+  margin-top: 20px;
+}
+
+.christmas-light {
+  width: 15px;
+  height: 15px;
+  background-color: red;
+  border-radius: 50%;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+}
+
+
+.recipes-section {
+  padding: 30px;
+  background-color: #f8f9fa;
+  text-align: center;
+}
+
+
+.recipes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+}
+
+.recipe-card {
+  background-color: #ffffff;
+  border-radius: 10px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  transition: transform 0.3s;
+}
+
+.recipe-card img {
+  width: 100%;
+  height: 150px;
+  object-fit: cover;
+}
+
+.recipe-info {
+  padding: 15px;
+  text-align: left;
+}
+
+.recipe-info h3 {
+  font-size: 18px;
+  color: #212529;
+}
+
+.recipe-info p {
+  font-size: 14px;
+  color: #6c757d;
+  margin: 5px 0;
+}
+
+.favorite-icon {
+  font-size: 20px;
+  color: #ff6b6b;
+  margin-top: 10px;
+}
+
+.view-recipe-btn {
+  width: calc(100% - 30px);
+  margin: 15px;
+  padding: 10px;
+  font-size: 14px;
+  background-color: #28a745;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  text-align: center;
+}
+
+.view-recipe-btn:hover {
+  background-color: #218838;
+}
+
+.recipe-card:hover {
+  transform: translateY(-5px);
+}
+
+.back-to-home {
+  cursor: pointer;
+  transition: transform 0.3s ease, color 0.3s ease;
+  /* Smooth transition for transform and color */
+}
+
+.back-to-home:hover {
+  transform: scale(1.1);
+  /* Slightly increases the size of the icon */
+  color: #007bff;
+  /* Changes the color of the icon on hover (you can adjust the color) */
+}
+
+.cuisine-title {
+  font-family: 'Roboto', sans-serif;
+  font-size: 3rem;
+  font-weight: 700;
+  text-align: center;
+  position: relative;
+  animation: flyIn 4s ease-in-out infinite alternate;
+  background-image: linear-gradient(to right, #00BFFF, #FF6347, #FFD700, #8A2BE2);
+  -webkit-background-clip: text;
+  /* Chắc chắn rằng clip nền là text */
+  background-clip: text;
+  /* Đảm bảo tương thích với tất cả trình duyệt */
+  text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.1), 0 0 25px rgba(255, 87, 51, 0.6);
+  margin-bottom: 40px;
+  letter-spacing: 2px;
+}
+
+@keyframes flyIn {
+  0% {
+    transform: translateX(-100%) rotate(-15deg);
+  }
+
+  50% {
+    transform: translateX(0) rotate(0);
+  }
+
+  100% {
+    transform: translateX(100%) rotate(15deg);
+  }
+}
+
+.cuisine-title2 {
+  font-family: 'Poppins', sans-serif;
+  font-size: 3rem;
+  font-weight: 700;
+  color: #FF5733;
+  text-align: center;
+  position: relative;
+  animation: bounceIn 2s ease-out infinite alternate;
+  margin-bottom: 40px;
+  letter-spacing: 2px;
+}
+
+@keyframes bounceIn {
+  0% {
+    transform: translateY(-100%) scale(0.8);
+  }
+
+  50% {
+    transform: translateY(10%) scale(1.05);
+  }
+
+  100% {
+    transform: translateY(0) scale(1);
+  }
+}
+
+
+
+.international-cuisine {
+  padding: 30px;
+  background-color: #f5f5f5;
+  text-align: center;
+}
+
+.cuisine-title {
+  font-size: 28px;
+  margin-bottom: 20px;
+  color: #2c3e50;
+}
+
+.cuisine-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+}
+
+.cuisine-card {
+  background-color: #ffffff;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  text-align: left;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.cuisine-card:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+}
+
+.cuisine-image {
+  width: 100%;
+  height: 150px;
+  object-fit: cover;
+}
+
+.cuisine-info {
+  padding: 15px;
+}
+
+.cuisine-dish {
+  font-size: 18px;
+  color: #34495e;
+  margin-bottom: 5px;
+}
+
+.cuisine-country {
+  font-size: 16px;
+  color: #7f8c8d;
+  font-style: italic;
+  margin-bottom: 10px;
+}
+
+.cuisine-description {
+  font-size: 14px;
+  color: #555;
+}

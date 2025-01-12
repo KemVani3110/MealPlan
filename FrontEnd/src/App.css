@@ -1,0 +1,14 @@
+body {
+    font-family: 'Poppins', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    /* background-color: #e9ecef; */
+    /* background: linear-gradient(135deg, #74ebd5 0%, #acb6e5 100%); */
+    color: #333;
+    min-height: 100vh;
+    overflow-y: auto;
+    margin: 0;
+    padding: 20px;
+}
+.App{
+    /* background-color: #c9d6ff;
+    background: linear-gradient(to right, #e2e2e2, #c9d6ff); */
+}
