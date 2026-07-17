@@ -6,9 +6,9 @@
 }
 
 .ingredient-shell {
-    width: min(1180px, calc(100% - 32px));
+    width: min(var(--app-page-width), calc(100% - var(--app-page-gutter)));
     margin: 0 auto;
-    padding: 112px 0 40px;
+    padding: var(--app-page-top) 0 var(--app-page-bottom);
 }
 
 .ingredient-header {
@@ -589,8 +589,8 @@
 
 @media (max-width: 640px) {
     .ingredient-shell {
-        width: min(100% - 20px, 1180px);
-        padding-top: 132px;
+        width: min(var(--app-page-width), calc(100% - var(--app-page-gutter)));
+        padding-top: var(--app-page-top);
     }
 
     .ingredient-header {

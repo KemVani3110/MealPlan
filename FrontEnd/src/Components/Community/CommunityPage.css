@@ -2,13 +2,13 @@
     min-height: 100vh;
     background: #f6f8fb;
     color: #10243f;
-    padding: 104px 24px 40px;
+    padding: var(--app-page-top) 0 var(--app-page-bottom);
 }
 
 .community-page-sidebar,
 .community-page-main,
 .community-page-rankings {
-    width: min(1180px, 100%);
+    width: min(var(--app-page-width), calc(100% - var(--app-page-gutter)));
     margin: 0 auto;
 }
 
@@ -294,7 +294,7 @@
 
 @media (max-width: 760px) {
     .community-page-container {
-        padding: 92px 14px 28px;
+        padding: var(--app-page-top) 0 var(--app-page-bottom);
     }
 
     .community-page-sidebar {

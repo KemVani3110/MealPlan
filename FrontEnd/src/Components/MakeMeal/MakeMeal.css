@@ -6,9 +6,9 @@
 }
 
 .make-meal-shell {
-    width: min(1220px, calc(100% - 32px));
+    width: min(var(--app-page-width), calc(100% - var(--app-page-gutter)));
     margin: 0 auto;
-    padding: 112px 0 42px;
+    padding: var(--app-page-top) 0 var(--app-page-bottom);
 }
 
 .make-meal-header {
@@ -742,8 +742,8 @@
 
 @media (max-width: 760px) {
     .make-meal-shell {
-        width: min(100% - 20px, 1220px);
-        padding-top: 132px;
+        width: min(var(--app-page-width), calc(100% - var(--app-page-gutter)));
+        padding-top: var(--app-page-top);
     }
 
     .make-meal-header,

@@ -10,9 +10,9 @@
 }
 
 .main-shell {
-  width: min(1180px, calc(100% - 32px));
+  width: min(var(--app-page-width), calc(100% - var(--app-page-gutter)));
   margin: 0 auto;
-  padding: 112px 0 0;
+  padding: var(--app-page-top) 0 var(--app-page-bottom);
 }
 
 .dashboard-hero {
@@ -315,8 +315,8 @@
 
 @media (max-width: 640px) {
   .main-shell {
-    width: min(100% - 20px, 1180px);
-    padding-top: 138px;
+    width: min(var(--app-page-width), calc(100% - var(--app-page-gutter)));
+    padding-top: var(--app-page-top);
   }
 
   .hero-copy-block h1 {
