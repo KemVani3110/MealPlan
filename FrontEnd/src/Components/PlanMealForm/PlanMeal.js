@@ -1,712 +1,702 @@
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
 import './PlanMeal.css';
 import TaskBar from '../TaskBar/TaskBar';
 import Snowfall from '../Snowfall/SnowFall';
 
+const API_URL = 'http://localhost:3060';
+const mealTimes = ['Bữa sáng', 'Bữa trưa', 'Bữa chiều'];
+const daysOfWeek = ['Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy', 'Chủ Nhật'];
+const adultDailyCalories = 2000;
+const childDailyCalories = 1300;
 
+const getCurrentDate = () => new Date().toISOString().split('T')[0];
+const getDateAfter = (days) => {
+  const date = new Date();
+  date.setDate(date.getDate() + days);
+  return date.toISOString().split('T')[0];
+};
+const getSlotKey = (mealTime, dayOfWeek) => `${mealTime}__${dayOfWeek}`;
+
+const createEmptyMealSlots = () => {
+  const slots = {};
+  mealTimes.forEach((mealTime) => {
+    daysOfWeek.forEach((dayOfWeek) => {
+      slots[getSlotKey(mealTime, dayOfWeek)] = [];
+    });
+  });
+  return slots;
+};
+
+const toNumber = (value, fallback = 0) => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : fallback;
+};
+
+const formatCurrency = (value) =>
+  new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 0 }).format(toNumber(value));
+
+const formatNumber = (value, maximumFractionDigits = 0) =>
+  new Intl.NumberFormat('vi-VN', { maximumFractionDigits }).format(toNumber(value));
+
+const formatCalories = (value) => `${formatNumber(value, 1)} calo`;
+
+const formatCalorieDifference = (value) => {
+  const normalizedValue = toNumber(value);
+  if (normalizedValue > 0) return `Dư ${formatCalories(normalizedValue)}`;
+  if (normalizedValue < 0) return `Thiếu ${formatCalories(Math.abs(normalizedValue))}`;
+  return 'Đủ mục tiêu';
+};
+
+const formatDateForInput = (date) => {
+  if (!date) return '';
+  if (typeof date === 'string') return date.split('T')[0];
+  return new Date(date).toISOString().split('T')[0];
+};
+
+const getDefaultPlanName = (startDate, endDate) => {
+  if (startDate && endDate) return `Kế hoạch ${formatDateForInput(startDate)} - ${formatDateForInput(endDate)}`;
+  return 'Kế hoạch mới';
+};
+
+const normalizeMeal = (meal, foodCatalog = []) => {
+  if (!meal) return null;
+
+  const foodId = meal.foodId || meal.Fid;
+  const catalogMeal = foodCatalog.find((item) => item.Fid === foodId || item.foodId === foodId);
+
+  return {
+    ...(catalogMeal || {}),
+    ...meal,
+    foodId,
+    Fid: catalogMeal?.Fid || meal.Fid || foodId,
+    foodName: catalogMeal?.foodName || meal.foodName || '',
+    foodPrice: toNumber(catalogMeal?.foodPrice ?? meal.foodPrice),
+    foodCalories: toNumber(catalogMeal?.foodCalories ?? meal.foodCalories),
+    ingredients: catalogMeal?.ingredients || meal.ingredients || [],
+    quantity: Math.max(1, toNumber(meal.quantity, 1)),
+  };
+};
+
+const buildSlotsFromDetails = (details = [], foodCatalog = []) => {
+  const slots = createEmptyMealSlots();
+
+  details.forEach((detail) => {
+    const slotKey = getSlotKey(detail.mealTime, detail.dayOfWeek);
+    if (!slots[slotKey]) return;
+
+    const meal = normalizeMeal(detail, foodCatalog);
+    if (meal?.foodId) {
+      slots[slotKey].push(meal);
+    }
+  });
+
+  return slots;
+};
+
+const getMealsTotalCost = (meals) =>
+  meals.reduce((total, meal) => total + toNumber(meal?.foodPrice) * toNumber(meal?.quantity, 1), 0);
+
+const getMealsTotalCalories = (meals) =>
+  meals.reduce((total, meal) => total + toNumber(meal?.foodCalories) * toNumber(meal?.quantity, 1), 0);
 
 const PlanMeal = () => {
-  const [mealModalOpen, setMealModalOpen] = useState(false);
-  const [currentMeal, setCurrentMeal] = useState(null);
+  const [meals, setMeals] = useState([]);
+  const [mealPlans, setMealPlans] = useState([]);
+  const [currentPlanId, setCurrentPlanId] = useState(null);
+  const [planName, setPlanName] = useState('Kế hoạch mới');
+  const [mealSlots, setMealSlots] = useState(createEmptyMealSlots);
+  const [dateRangeStart, setDateRangeStart] = useState(getCurrentDate());
+  const [dateRangeEnd, setDateRangeEnd] = useState(getDateAfter(6));
   const [peopleCount, setPeopleCount] = useState(1);
   const [childrenCount, setChildrenCount] = useState(0);
   const [hasChildren, setHasChildren] = useState(false);
-  const [mealSearches, setMealSearches] = useState(['']);
+  const [mealModalOpen, setMealModalOpen] = useState(false);
+  const [activeSlot, setActiveSlot] = useState(null);
   const [selectedMeals, setSelectedMeals] = useState([]);
-  const [totalCost, setTotalCost] = useState(0);
-  const [showWarning, setShowWarning] = useState(false);
-  const [meals, setMeals] = useState([]);
-  const [formWarning, setFormWarning] = useState(false);
-  const [mealPlans, setMealPlans] = useState([]);
-  const [currentPlanId, setCurrentPlanId] = useState(null);
+  const [mealSearchTerm, setMealSearchTerm] = useState('');
+  const [modalWarning, setModalWarning] = useState('');
+  const [saveStatus, setSaveStatus] = useState('');
 
-  const adultCalories = 667;
-  const childCalories = 400;
-  const totalStandardCalories = (peopleCount - childrenCount) * adultCalories + childrenCount * childCalories;
-  const totalSelectedCalories = selectedMeals.reduce(
-    (sum, meal) => sum + (meal ? meal.foodCalories * meal.quantity : 0),
-    0
+  const adultCount = Math.max(peopleCount, 0);
+  const dailyTargetCalories = adultCount * adultDailyCalories + childrenCount * childDailyCalories;
+  const mealTargetCalories = Math.round(dailyTargetCalories / mealTimes.length);
+  const planMeals = useMemo(() => Object.values(mealSlots).flat(), [mealSlots]);
+  const totalCost = useMemo(() => getMealsTotalCost(planMeals), [planMeals]);
+  const totalCalories = useMemo(() => getMealsTotalCalories(planMeals), [planMeals]);
+  const filledSlotCount = useMemo(
+    () => Object.values(mealSlots).filter((slotMeals) => slotMeals.length > 0).length,
+    [mealSlots]
   );
+  const totalSlotCount = mealTimes.length * daysOfWeek.length;
+  const completionPercent = Math.round((filledSlotCount / totalSlotCount) * 100);
 
+  const shoppingList = useMemo(() => {
+    const ingredientMap = {};
 
-  const calorieDifference = totalSelectedCalories - totalStandardCalories;
-
-  // Define meal times and days of the week
-  const mealTimes = ['Bữa sáng', 'Bữa trưa', 'Bữa chiều'];
-  const daysOfWeek = ['Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy', 'Chủ Nhật'];
-
-
-  // Load saved meal plan data when component mounts
-  useEffect(() => {
-    // Fetch meals data from API
-    axios
-      .get('http://localhost:3060/food-items')
-      .then((response) => setMeals(response.data))
-      .catch((error) => console.error('Error fetching food items:', error));
-
-    // Load saved meal plan from localStorage
-    const savedMealPlan = localStorage.getItem('mealPlan');
-    if (savedMealPlan) {
-      const parsedMealPlan = JSON.parse(savedMealPlan);
-      setPeopleCount(parsedMealPlan.peopleCount || 1);
-      setChildrenCount(parsedMealPlan.childrenCount || 0);
-      setHasChildren(parsedMealPlan.hasChildren || false);
-      setMealSearches(parsedMealPlan.mealSearches || ['']);
-      setSelectedMeals(parsedMealPlan.selectedMeals || [null]);
-      setTotalCost(parsedMealPlan.totalCost || 0);
-      console.log("Loaded meal plan from localStorage:", parsedMealPlan); // Debugging line
-    }
-  }, []);
-
-  useEffect(() => {
-    axios.get('http://localhost:3060/meal-plan')
-      .then(response => {
-        setMealPlans(response.data.mealPlans);
-        if (response.data.mealPlans.length > 0) {
-          loadMealPlan(response.data.mealPlans[0].id);
+    planMeals.forEach((meal) => {
+      meal.ingredients.forEach((ingredient) => {
+        const key = ingredient.ingredientName;
+        if (!ingredientMap[key]) {
+          ingredientMap[key] = { name: key, gram: 0 };
         }
-      })
-      .catch(error => console.error('Error fetching meal plans:', error));
+        ingredientMap[key].gram += toNumber(ingredient.gram) * toNumber(meal.quantity, 1);
+      });
+    });
+
+    return Object.values(ingredientMap).sort((a, b) => b.gram - a.gram);
+  }, [planMeals]);
+
+  const filteredMeals = useMemo(() => {
+    const keyword = mealSearchTerm.trim().toLowerCase();
+    if (!keyword) return meals;
+    return meals.filter((meal) => meal.foodName.toLowerCase().includes(keyword));
+  }, [mealSearchTerm, meals]);
+
+  const applyMealPlan = useCallback((plan, foodCatalog = []) => {
+    if (!plan) return;
+
+    const normalizedChildrenCount = toNumber(plan.children_count);
+    setPlanName(plan.plan_name || getDefaultPlanName(plan.date_range_start, plan.date_range_end));
+    setPeopleCount(toNumber(plan.people_count, 1));
+    setChildrenCount(normalizedChildrenCount);
+    setHasChildren(normalizedChildrenCount > 0);
+    setDateRangeStart(formatDateForInput(plan.date_range_start) || getCurrentDate());
+    setDateRangeEnd(formatDateForInput(plan.date_range_end));
+    setMealSlots(buildSlotsFromDetails(plan.details, foodCatalog));
+    setCurrentPlanId(plan.id);
+    setMealModalOpen(false);
+    setActiveSlot(null);
+    setSelectedMeals([]);
+    setMealSearchTerm('');
+    setSaveStatus('');
   }, []);
 
-  const loadMealPlan = (planId) => {
-    const selectedPlan = mealPlans.find(plan => plan.id === planId);
-    if (selectedPlan) {
-      setPeopleCount(selectedPlan.people_count);
-      setChildrenCount(selectedPlan.children_count);
-      setHasChildren(selectedPlan.children_count > 0);
-      setTotalCost(selectedPlan.total_cost);
-      setSelectedMeals(selectedPlan.details.map(detail => ({
-        foodId: detail.foodId,
-        foodName: detail.foodName,
-        quantity: detail.quantity,
-        mealTime: detail.mealTime,
-        dayOfWeek: detail.dayOfWeek,
-      })));
-      setCurrentPlanId(planId);
+  const fetchInitialData = useCallback(async () => {
+    try {
+      const [foodResponse, planResponse] = await Promise.all([
+        axios.get(`${API_URL}/food-items`),
+        axios.get(`${API_URL}/meal-plan`),
+      ]);
+
+      const foodCatalog = foodResponse.data || [];
+      const plans = planResponse.data.mealPlans || [];
+
+      setMeals(foodCatalog);
+      setMealPlans(plans);
+
+      if (plans.length > 0) {
+        applyMealPlan(plans[0], foodCatalog);
+        return;
+      }
+
+      const savedMealPlan = localStorage.getItem('mealPlan');
+      if (savedMealPlan) {
+        const parsedMealPlan = JSON.parse(savedMealPlan);
+        setPlanName(parsedMealPlan.planName || 'Kế hoạch mới');
+        setPeopleCount(parsedMealPlan.peopleCount || 1);
+        setChildrenCount(parsedMealPlan.childrenCount || 0);
+        setHasChildren(parsedMealPlan.hasChildren || false);
+        setDateRangeStart(parsedMealPlan.dateRangeStart || getCurrentDate());
+        setDateRangeEnd(parsedMealPlan.dateRangeEnd || getDateAfter(6));
+        setMealSlots(parsedMealPlan.mealSlots || createEmptyMealSlots());
+      }
+    } catch (error) {
+      console.error('Error loading meal plan data:', error);
+      setSaveStatus('Không thể tải dữ liệu món ăn hoặc kế hoạch.');
+    }
+  }, [applyMealPlan]);
+
+  useEffect(() => {
+    fetchInitialData();
+  }, [fetchInitialData]);
+
+  useEffect(() => {
+    const mealPlanData = {
+      planName,
+      peopleCount,
+      childrenCount,
+      hasChildren,
+      dateRangeStart,
+      dateRangeEnd,
+      mealSlots,
+      totalCost,
+    };
+    localStorage.setItem('mealPlan', JSON.stringify(mealPlanData));
+  }, [planName, peopleCount, childrenCount, hasChildren, dateRangeStart, dateRangeEnd, mealSlots, totalCost]);
+
+  const refreshMealPlans = async (planIdToLoad = currentPlanId) => {
+    const response = await axios.get(`${API_URL}/meal-plan`);
+    const plans = response.data.mealPlans || [];
+    setMealPlans(plans);
+
+    const nextPlan = plans.find((plan) => plan.id === planIdToLoad) || plans[0];
+    if (nextPlan) {
+      applyMealPlan(nextPlan, meals);
     }
   };
 
-  const saveMealPlanToDB = () => {
-    const validMeals = selectedMeals.filter(meal => meal !== null && meal.foodId);
+  const resetCurrentDraft = () => {
+    setPlanName('Kế hoạch mới');
+    setPeopleCount(1);
+    setChildrenCount(0);
+    setHasChildren(false);
+    setMealSlots(createEmptyMealSlots());
+    setDateRangeStart(getCurrentDate());
+    setDateRangeEnd(getDateAfter(6));
+    setCurrentPlanId(null);
+    setMealModalOpen(false);
+    setActiveSlot(null);
+    setSelectedMeals([]);
+    setMealSearchTerm('');
+    setSaveStatus('Đang tạo kế hoạch mới.');
+  };
+
+  const startNewPlan = () => {
+    const hasCurrentData = currentPlanId || planMeals.length > 0 || planName.trim() !== 'Kế hoạch mới';
+    if (
+      hasCurrentData &&
+      !window.confirm('Tạo kế hoạch mới sẽ rời kế hoạch hiện tại. Nếu bạn bấm nhầm, chọn Hủy để giữ nguyên.')
+    ) {
+      return;
+    }
+
+    resetCurrentDraft();
+  };
+
+  const handlePeopleCountChange = (value) => {
+    const normalizedPeopleCount = Math.max(1, toNumber(value, 1));
+    setPeopleCount(normalizedPeopleCount);
+  };
+
+  const handleChildrenCountChange = (value) => {
+    setChildrenCount(Math.max(0, toNumber(value)));
+  };
+
+  const handleHasChildrenChange = () => {
+    setHasChildren((currentValue) => {
+      if (currentValue) {
+        setChildrenCount(0);
+      }
+      return !currentValue;
+    });
+  };
+
+  const openModalForSlot = (mealTime, dayOfWeek) => {
+    const slotKey = getSlotKey(mealTime, dayOfWeek);
+    const slotMeals = mealSlots[slotKey] || [];
+
+    setActiveSlot({ mealTime, dayOfWeek, slotKey });
+    setSelectedMeals(slotMeals.map((meal) => normalizeMeal(meal, meals)));
+    setMealSearchTerm('');
+    setModalWarning('');
+    setMealModalOpen(true);
+  };
+
+  const addMealToSelection = (meal) => {
+    setSelectedMeals((currentMeals) => {
+      const normalizedMeal = normalizeMeal({ ...meal, foodId: meal.Fid, quantity: 1 }, meals);
+      const existingIndex = currentMeals.findIndex((item) => item.foodId === normalizedMeal.foodId);
+
+      if (existingIndex >= 0) {
+        return currentMeals.map((item, index) =>
+          index === existingIndex ? { ...item, quantity: item.quantity + 1 } : item
+        );
+      }
+
+      return [...currentMeals, normalizedMeal];
+    });
+    setModalWarning('');
+  };
+
+  const updateSelectedMealQuantity = (index, value) => {
+    setSelectedMeals((currentMeals) =>
+      currentMeals.map((meal, mealIndex) =>
+        mealIndex === index ? { ...meal, quantity: Math.max(1, toNumber(value, 1)) } : meal
+      )
+    );
+  };
+
+  const removeSelectedMeal = (index) => {
+    setSelectedMeals((currentMeals) => currentMeals.filter((_, mealIndex) => mealIndex !== index));
+  };
+
+  const saveSlotMeals = () => {
+    if (!activeSlot) return;
+
+    if (selectedMeals.length === 0) {
+      setModalWarning('Hãy chọn ít nhất một món cho bữa này.');
+      return;
+    }
+
+    setMealSlots((currentSlots) => ({
+      ...currentSlots,
+      [activeSlot.slotKey]: selectedMeals.map((meal) => normalizeMeal(meal, meals)),
+    }));
+    setMealModalOpen(false);
+  };
+
+  const clearSlot = (slotKey) => {
+    setMealSlots((currentSlots) => ({
+      ...currentSlots,
+      [slotKey]: [],
+    }));
+  };
+
+  const saveMealPlanToDB = async () => {
+    const validMeals = Object.entries(mealSlots).flatMap(([slotKey, slotMeals]) => {
+      const [mealTime, dayOfWeek] = slotKey.split('__');
+      return slotMeals.map((meal) => ({
+        mealTime,
+        dayOfWeek,
+        foodId: meal.foodId,
+        quantity: meal.quantity,
+      }));
+    });
+
+    if (!dateRangeStart || !dateRangeEnd) {
+      setSaveStatus('Vui lòng chọn ngày bắt đầu và ngày kết thúc.');
+      return;
+    }
 
     if (validMeals.length === 0) {
-      alert('Please select at least one valid meal!');
+      setSaveStatus('Vui lòng thêm ít nhất một món vào lịch tuần.');
       return;
     }
 
     const payload = {
       mealPlanId: currentPlanId,
-      dateRangeStart: document.getElementById('start-date').value,
-      dateRangeEnd: document.getElementById('end-date').value,
+      planName: planName.trim() || getDefaultPlanName(dateRangeStart, dateRangeEnd),
+      dateRangeStart,
+      dateRangeEnd,
       peopleCount,
-      childrenCount,
+      childrenCount: hasChildren ? childrenCount : 0,
       totalCost,
-      meals: validMeals.map((meal, index) => ({
-        mealTime: mealTimes[Math.floor(index / 7)],
-        dayOfWeek: daysOfWeek[index % 7],
-        foodId: meal.foodId,
-        quantity: meal.quantity,
-      })),
+      meals: validMeals,
     };
 
-    axios.post('http://localhost:3060/save-meal-plan', payload)
-      .then(response => {
-        alert('Meal plan saved successfully!');
-        if (!currentPlanId) {
-          const newPlan = {
-            id: response.data.newMealPlanId,
-            date_range_start: payload.dateRangeStart,
-            date_range_end: payload.dateRangeEnd,
-            people_count: payload.peopleCount,
-            children_count: payload.childrenCount,
-            total_cost: payload.totalCost,
-            details: payload.meals,
-          };
-          setMealPlans([newPlan, ...mealPlans]);
-        }
-      })
-      .catch(error => console.error('Error saving meal plan:', error));
-  };
-
-
-
-  // Add new plan
-  const addNewPlan = () => {
-    setPeopleCount(1);         // Reset số người ăn
-    setChildrenCount(0);       // Reset số trẻ em
-    setHasChildren(false);     // Không có trẻ em mặc định
-    setMealSearches(['']);     // Làm trống tìm kiếm món ăn
-    setSelectedMeals([null]);  // Xóa danh sách món ăn
-    setTotalCost(0);           // Reset tổng chi phí
-    setCurrentPlanId(null);    // Đặt kế hoạch mới (không có ID)
-  };
-
-
-  // Save meal plan data to localStorage when relevant state changes
-  useEffect(() => {
-    const mealPlanData = {
-      peopleCount,
-      childrenCount,
-      hasChildren,
-      mealSearches,
-      selectedMeals,
-      totalCost,
-    };
-    console.log("Saving meal plan to localStorage:", mealPlanData); // Debugging line
-    localStorage.setItem('mealPlan', JSON.stringify(mealPlanData));
-  }, [peopleCount, childrenCount, hasChildren, mealSearches, selectedMeals, totalCost]);
-
-  const totalCalories = (peopleCount - childrenCount) * adultCalories + childrenCount * childCalories;
-
-  const handleSaveMealToDB = () => {
-    const validMeals = selectedMeals.filter((meal) => meal !== null && meal.foodId);
-
-    if (validMeals.length === 0) {
-      alert("Vui lòng chọn ít nhất một món ăn hợp lệ!");
-      return;
+    try {
+      setSaveStatus('Đang lưu kế hoạch...');
+      const response = await axios.post(`${API_URL}/save-meal-plan`, payload);
+      const savedPlanId = currentPlanId || response.data.newMealPlanId;
+      await refreshMealPlans(savedPlanId);
+      setSaveStatus('Đã lưu kế hoạch thành công.');
+    } catch (error) {
+      console.error('Error saving meal plan:', error.response?.data || error.message);
+      setSaveStatus('Không thể lưu kế hoạch. Vui lòng kiểm tra lại dữ liệu.');
     }
-
-    const payload = {
-      mealPlanId: currentPlanId, // Null nếu là kế hoạch mới
-      dateRangeStart: document.getElementById("start-date").value,
-      dateRangeEnd: document.getElementById("end-date").value,
-      peopleCount,
-      childrenCount,
-      totalCost,
-      meals: validMeals.map((meal, index) => ({
-        mealTime: mealTimes[Math.floor(index / 7)],
-        dayOfWeek: daysOfWeek[index % 7],
-        foodId: meal.foodId,
-        quantity: meal.quantity,
-      })),
-    };
-
-    axios.post("http://localhost:3060/save-meal-plan", payload)
-      .then((response) => {
-        alert("Lưu kế hoạch thành công!");
-
-        if (!currentPlanId) {
-          // Nếu là kế hoạch mới, thêm vào danh sách kế hoạch
-          const newPlan = {
-            id: response.data.newMealPlanId,
-            date_range_start: payload.dateRangeStart,
-            date_range_end: payload.dateRangeEnd,
-            people_count: payload.peopleCount,
-            children_count: payload.childrenCount,
-            total_cost: payload.totalCost,
-            details: payload.meals,
-          };
-          setMealPlans([newPlan, ...mealPlans]); // Thêm kế hoạch mới vào danh sách
-        }
-      })
-      .catch((error) => {
-        console.error("Error saving meal plan:", error.response?.data || error.message);
-        alert("Vui lòng chọn khung thời gian bắt đầu và kết thúc!");
-      });
-  };
-
-
-
-  const [isFlipping, setIsFlipping] = useState(false);
-
-  const handleSwitchPlanWithFlip = (planId) => {
-    setIsFlipping(true); // Kích hoạt hiệu ứng lật
-    setTimeout(() => {
-      handleSwitchPlan(planId); // Chuyển kế hoạch
-      setIsFlipping(false); // Kết thúc hiệu ứng
-    }, 600); // Thời gian khớp với hiệu ứng CSS
-  };
-
-
-
-  //--------
-  const handleMealSelection = (meal, index) => {
-    const updatedMeals = [...selectedMeals];
-    const updatedSearches = [...mealSearches];
-
-    updatedMeals[index] = {
-      ...meal,
-      foodId: meal.Fid,
-      quantity: updatedMeals[index]?.quantity || 1,
-    };
-    updatedSearches[index] = meal.foodName;
-
-    setSelectedMeals(updatedMeals);
-    setMealSearches(updatedSearches);
-    updateTotalCost(updatedMeals);
-  };
-
-  const getCurrentDate = () => {
-    const today = new Date();
-    return today.toISOString().split('T')[0];
-  };
-
-  const updateTotalCost = (meals) => {
-    const cost = meals.filter(meal => meal !== null).reduce((total, meal) => total + meal.foodPrice * meal.quantity, 0);
-    setTotalCost(cost);
-  };
-
-  const increaseQuantity = (index) => {
-    const updatedMeals = [...selectedMeals];
-    updatedMeals[index].quantity += 1;
-    setSelectedMeals(updatedMeals);
-    updateTotalCost(updatedMeals);
-  };
-
-  const removeMeal = (index) => {
-    const updatedMeals = [...selectedMeals];
-    const updatedSearches = [...mealSearches];
-
-    updatedMeals.splice(index, 1);
-    updatedSearches.splice(index, 1);
-
-    setSelectedMeals(updatedMeals);
-    setMealSearches(updatedSearches);
-
-    updateTotalCost(updatedMeals);
-  };
-
-
-  const decreaseQuantity = (index) => {
-    const updatedMeals = [...selectedMeals];
-    if (updatedMeals[index].quantity > 1) {
-      updatedMeals[index].quantity -= 1;
-      setSelectedMeals(updatedMeals);
-      updateTotalCost(updatedMeals);
-    }
-  };
-
-  const handleQuantityChange = (index, newQuantity) => {
-    const updatedMeals = [...selectedMeals];
-    updatedMeals[index].quantity = newQuantity > 0 ? newQuantity : 1;
-    setSelectedMeals(updatedMeals);
-    updateTotalCost(updatedMeals);
-  };
-
-  const addNewMeal = () => {
-    setSelectedMeals([...selectedMeals, null]);
-    setMealSearches([...mealSearches, '']);
-  };
-
-  const handleSaveMeal = () => {
-    if (selectedMeals.every((meal) => meal === null)) {
-      setShowWarning(true);
-      return;
-    }
-    if (selectedMeals.some((meal) => meal === null)) {
-      setFormWarning(true);
-      return;
-    }
-    setShowWarning(false);
-    setFormWarning(false);
-
-    if (selectedMeals.length > 0) {
-      // Create summary content for the meal plan modal
-      const summaryContent = `
-        Số người lớn: ${peopleCount - childrenCount}, Trẻ em: ${childrenCount},
-        Món ăn: ${selectedMeals.map((meal) => meal?.foodName).join(', ')}, Tổng chi phí: ${totalCost} VNĐ
-      `;
-      const ingredientsContent = selectedMeals
-        .map(
-          (meal) => `
-        <h4>${meal.foodName} (x${meal.quantity})</h4>
-        <ul class="ingredient-list">
-          ${meal.ingredients
-              .map(
-                (ingredient) => `
-            <li>${ingredient.ingredientName} - ${ingredient.gram * meal.quantity} gram</li>
-          `
-              )
-              .join('')}
-        </ul>
-      `
-        )
-        .join('');
-
-      if (currentMeal) {
-        currentMeal.innerHTML = `
-          ${summaryContent}
-          <h4>Nguyên liệu cần mua:</h4>
-          ${ingredientsContent}
-        `;
-
-        // Reset and Edit buttons
-        const resetButton = document.createElement('button');
-        resetButton.innerHTML = 'x';
-        resetButton.className = 'reset-btn';
-        resetButton.onclick = () => {
-          currentMeal.innerHTML = '<button class="open-modal-btn">Thêm</button>';
-          currentMeal.querySelector('button').onclick = openModalForNewMeal;
-        };
-
-        const editButton = document.createElement('button');
-        editButton.innerHTML = '✏️';
-        editButton.className = 'edit-btn';
-        editButton.onclick = () => editMeal(currentMeal);
-
-        currentMeal.appendChild(resetButton);
-        currentMeal.appendChild(editButton);
-      }
-
-      // Save meal plan to localStorage
-      localStorage.setItem('mealPlan', JSON.stringify({
-        peopleCount,
-        childrenCount,
-        hasChildren,
-        mealSearches,
-        selectedMeals,
-        totalCost,
-      }));
-    }
-
-    setMealModalOpen(false); // Close the modal
-  };
-
-
-  const editMeal = (mealCell) => {
-    setCurrentMeal(mealCell);
-    const mealData = mealCell.dataset;
-    setPeopleCount(parseInt(mealData.peopleCount || 1));
-    setChildrenCount(parseInt(mealData.childrenCount || 0));
-    setHasChildren(Boolean(parseInt(mealData.childrenCount || 0)));
-    setMealSearches(mealData.mealSearches ? JSON.parse(mealData.mealSearches) : ['']);
-    setSelectedMeals(mealData.selectedMeals ? JSON.parse(mealData.selectedMeals) : [null]);
-    setTotalCost(parseFloat(mealData.totalCost || 0));
-    setMealModalOpen(true);
-  };
-
-  const openModalForNewMeal = (e) => {
-    setPeopleCount(1);
-    setChildrenCount(0);
-    setHasChildren(false);
-    setMealSearches(['']);
-    setSelectedMeals([null]);
-    setTotalCost(0);
-    setCurrentMeal(e.target.closest('.meal-cell'));
-    setMealModalOpen(true);
-  };
-
-  const handleChildrenCountChange = (newChildrenCount) => {
-    if (newChildrenCount <= peopleCount) {
-      setChildrenCount(newChildrenCount);
-    }
-  };
-
-  const handleSearchChange = (index, newSearchTerm) => {
-    const updatedSearches = [...mealSearches];
-    updatedSearches[index] = newSearchTerm;
-    setMealSearches(updatedSearches);
-
-    const updatedMeals = [...selectedMeals];
-    if (!newSearchTerm) {
-      updatedMeals[index] = null;
-    }
-    setSelectedMeals(updatedMeals);
   };
 
   const handleSwitchPlan = (planId) => {
-    if (planId) {
-      loadMealPlan(planId);
-    } else {
-      setPeopleCount(1);
-      setChildrenCount(0);
-      setHasChildren(false);
-      setMealSearches(['']);
-      setSelectedMeals([null]);
-      setTotalCost(0);
-      setCurrentPlanId(null);
+    if (!planId) {
+      resetCurrentDraft();
+      return;
+    }
+
+    const selectedPlan = mealPlans.find((plan) => plan.id === planId);
+    if (selectedPlan) {
+      applyMealPlan(selectedPlan, meals);
     }
   };
 
-  const handleDeletePlan = (planId) => {
-    if (!window.confirm('Are you sure you want to delete this plan?')) return;
+  const handleDeletePlan = async (planId) => {
+    if (!window.confirm('Bạn có chắc muốn xóa kế hoạch này?')) return;
 
-    axios.delete(`http://localhost:3060/delete-meal-plan/${planId}`)
-      .then(() => {
-        setMealPlans(mealPlans.filter(plan => plan.id !== planId));
-        if (currentPlanId === planId) {
-          setCurrentPlanId(null);
+    try {
+      await axios.delete(`${API_URL}/delete-meal-plan/${planId}`);
+      const remainingPlans = mealPlans.filter((plan) => plan.id !== planId);
+      setMealPlans(remainingPlans);
+
+      if (currentPlanId === planId) {
+        if (remainingPlans.length > 0) {
+          applyMealPlan(remainingPlans[0], meals);
+        } else {
+          resetCurrentDraft();
         }
-        alert('Plan deleted successfully!');
-      })
-      .catch(error => console.error('Error deleting plan:', error));
+      }
+
+      setSaveStatus('Đã xóa kế hoạch.');
+    } catch (error) {
+      console.error('Error deleting plan:', error);
+      setSaveStatus('Không thể xóa kế hoạch.');
+    }
   };
 
+  const getDayMeals = (dayOfWeek) =>
+    mealTimes.flatMap((mealTime) => mealSlots[getSlotKey(mealTime, dayOfWeek)] || []);
 
-  const resetSearch = (index) => {
-    const updatedSearches = [...mealSearches];
-    updatedSearches[index] = '';
-    setMealSearches(updatedSearches);
+  const renderSlot = (mealTime, dayOfWeek) => {
+    const slotKey = getSlotKey(mealTime, dayOfWeek);
+    const slotMeals = mealSlots[slotKey] || [];
+    const slotCalories = getMealsTotalCalories(slotMeals);
 
-    const updatedMeals = [...selectedMeals];
-    updatedMeals[index] = null;
-    setSelectedMeals(updatedMeals);
+    if (slotMeals.length === 0) {
+      return (
+        <button className="empty-slot-button" type="button" onClick={() => openModalForSlot(mealTime, dayOfWeek)}>
+          <span>Thêm món</span>
+          <small>{mealTime}</small>
+        </button>
+      );
+    }
+
+    return (
+      <div className="meal-slot-filled">
+        <div className="slot-meal-list">
+          {slotMeals.map((meal, index) => (
+            <div className="slot-meal-row" key={`${meal.foodId}-${index}`}>
+              <span>{meal.foodName}</span>
+              <strong>x{meal.quantity}</strong>
+            </div>
+          ))}
+        </div>
+        <div className="slot-meta">
+          <span>{formatCalories(slotCalories)}</span>
+          <span>{formatCurrency(getMealsTotalCost(slotMeals))}đ</span>
+        </div>
+        <div className="slot-actions">
+          <button type="button" onClick={() => openModalForSlot(mealTime, dayOfWeek)}>Sửa</button>
+          <button type="button" onClick={() => clearSlot(slotKey)}>Xóa</button>
+        </div>
+      </div>
+    );
   };
 
   return (
-    <div className='main' style={{ marginTop: '1%' }}>
+    <div className="meal-page">
       <TaskBar />
       <Snowfall />
 
-      <h1 className='titleFirst'>Lịch ăn uống trong tuần</h1>
-      <p className='titleSec'>Chọn món ăn cho mỗi bữa ăn trong tuần của bạn</p>
-      <div className='date-range'>
-        <label htmlFor='start-date'>Start Date:</label>
-        <input type='date' id='start-date' defaultValue={getCurrentDate()} />
+      <section className="meal-hero">
+        <div>
+          <p className="eyebrow">Meal Planner</p>
+          <h1>Lịch ăn uống trong tuần</h1>
+          <p className="hero-copy">Lên món theo từng bữa, kiểm soát calo, chi phí và nguyên liệu cần mua cho cả tuần.</p>
+        </div>
+        <div className="hero-actions">
+          <button type="button" className="primary-action" onClick={saveMealPlanToDB}>Lưu kế hoạch</button>
+        </div>
+      </section>
 
-        <label htmlFor='end-date'>End Date:</label>
-        <input type='date' id='end-date' />
-      </div>
-
-      <div className="meal-plan-wrapper">
-        <div className="meal-plan-container">
-          <div className={`meal-plan ${currentPlanId === null ? 'flip' : ''}`}>
-            <div className="plan-front">
-              {currentPlanId ? `Plan ${currentPlanId}` : 'Plan mới'}
+      <section className="planner-controls" aria-label="Thông tin kế hoạch">
+        <label className="plan-name-field">
+          <span>Tên kế hoạch</span>
+          <input type="text" value={planName} onChange={(event) => setPlanName(event.target.value)} />
+        </label>
+        <label>
+          <span>Ngày bắt đầu</span>
+          <input type="date" value={dateRangeStart} onChange={(event) => setDateRangeStart(event.target.value)} />
+        </label>
+        <label>
+          <span>Ngày kết thúc</span>
+          <input type="date" value={dateRangeEnd} onChange={(event) => setDateRangeEnd(event.target.value)} />
+        </label>
+        <label>
+          <span>Người lớn</span>
+          <div className="stepper-control">
+            <button type="button" onClick={() => handlePeopleCountChange(peopleCount - 1)}>-</button>
+            <input type="number" min="1" value={peopleCount} onChange={(event) => handlePeopleCountChange(event.target.value)} />
+            <button type="button" onClick={() => handlePeopleCountChange(peopleCount + 1)}>+</button>
+          </div>
+        </label>
+        <label className="children-toggle">
+          <span>Có trẻ em</span>
+          <input type="checkbox" checked={hasChildren} onChange={handleHasChildrenChange} />
+        </label>
+        {hasChildren && (
+          <label>
+            <span>Số trẻ em</span>
+            <div className="stepper-control">
+              <button type="button" onClick={() => handleChildrenCountChange(childrenCount - 1)}>-</button>
+              <input type="number" min="0" value={childrenCount} onChange={(event) => handleChildrenCountChange(event.target.value)} />
+              <button type="button" onClick={() => handleChildrenCountChange(childrenCount + 1)}>+</button>
             </div>
-            <div className="plan-back">
-              {`Plan ${currentPlanId ? currentPlanId + 1 : 'mới'}`}
+          </label>
+        )}
+      </section>
+
+      <section className="plan-tabs" aria-label="Danh sách kế hoạch đã lưu">
+        {mealPlans.map((plan) => (
+          <div className="plan-tab-group" key={plan.id}>
+            <button
+              type="button"
+              className={`plan-tab ${currentPlanId === plan.id ? 'active' : ''}`}
+              onClick={() => handleSwitchPlan(plan.id)}
+            >
+              {plan.plan_name || getDefaultPlanName(plan.date_range_start, plan.date_range_end)}
+            </button>
+            <button type="button" className="delete-plan-btn" onClick={() => handleDeletePlan(plan.id)}>
+              ×
+            </button>
+          </div>
+        ))}
+        <button type="button" className="plan-tab new-plan-tab" onClick={startNewPlan}>
+          + Tạo kế hoạch
+        </button>
+      </section>
+
+      {saveStatus && <p className="save-status">{saveStatus}</p>}
+
+      <main className="planner-layout">
+        <section className="week-board" aria-label="Lịch ăn uống tuần">
+          <div className="week-grid week-header">
+            <div className="meal-time-heading">Bữa</div>
+            {daysOfWeek.map((dayOfWeek) => {
+              const dayCalories = getMealsTotalCalories(getDayMeals(dayOfWeek));
+              return (
+                <div className="day-heading" key={dayOfWeek}>
+                  <strong>{dayOfWeek}</strong>
+                  <span>{formatNumber(dayCalories, 1)}/{formatNumber(dailyTargetCalories)} calo</span>
+                </div>
+              );
+            })}
+          </div>
+
+          {mealTimes.map((mealTime) => (
+            <div className="week-grid meal-row" key={mealTime}>
+              <div className="meal-row-label">
+                <strong>{mealTime}</strong>
+                <span>Mục tiêu {formatCalories(mealTargetCalories)}</span>
+              </div>
+              {daysOfWeek.map((dayOfWeek) => (
+                <div className="meal-slot" key={dayOfWeek}>
+                  {renderSlot(mealTime, dayOfWeek)}
+                </div>
+              ))}
+            </div>
+          ))}
+        </section>
+
+        <aside className="planner-summary" aria-label="Tóm tắt kế hoạch">
+          <div className="summary-block">
+            <p className="summary-label">Tiến độ</p>
+            <strong>{completionPercent}%</strong>
+            <span>{filledSlotCount}/{totalSlotCount} bữa đã có món</span>
+            <div className="progress-track">
+              <div style={{ width: `${completionPercent}%` }} />
             </div>
           </div>
-        </div>
 
-        <div className='plan-tabs'>
-          {mealPlans.map(plan => (
-            <div key={plan.id} className='plan-tab-container'>
-              <button
-                className={`plan-tab ${currentPlanId === plan.id ? 'active' : ''}`}
-                onClick={() => handleSwitchPlan(plan.id)}
-              >
-                Plan {plan.id}
-              </button>
-              <button
-                className='delete-plan-btn'
-                onClick={() => handleDeletePlan(plan.id)}
-                title='Delete Plan'
-              >
-                &times;
-              </button>
+          <div className="summary-grid">
+            <div>
+              <span>Chi phí tuần</span>
+              <strong>{formatCurrency(totalCost)}đ</strong>
             </div>
-          ))}
-          <button className='plan-tab new' onClick={() => handleSwitchPlan(null)}>+ New Plan</button>
-          <button className='save-btn' onClick={saveMealPlanToDB}>Save Plan</button>
-        </div>
-      </div> <br></br>
+            <div>
+              <span>Calo tuần</span>
+              <strong>{formatCalories(totalCalories)}</strong>
+            </div>
+            <div>
+              <span>Người lớn</span>
+              <strong>{adultCount}</strong>
+            </div>
+            <div>
+              <span>Trẻ em</span>
+              <strong>{childrenCount}</strong>
+            </div>
+          </div>
 
-
-
-      <table id="meal-plan">
-        <thead>
-          <tr>
-            <th>Bữa / Ngày</th>
-            <th>Thứ Hai</th>
-            <th>Thứ Ba</th>
-            <th>Thứ Tư</th>
-            <th>Thứ Năm</th>
-            <th>Thứ Sáu</th>
-            <th>Thứ Bảy</th>
-            <th>Chủ Nhật</th>
-          </tr>
-        </thead>
-        <tbody>
-          {['Bữa sáng', 'Bữa trưa', 'Bữa chiều'].map((mealTime) => (
-            <tr key={mealTime}>
-              <td>{mealTime}</td>
-              {Array.from({ length: 7 }).map((_, dayIndex) => (
-                <td key={dayIndex}>
-                  <div className="meal-cell">
-                    <button
-                      className="open-modal-btn"
-                      onClick={openModalForNewMeal}
-                    >
-                      Thêm
-                    </button>
-                  </div>
-                </td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-
+          <div className="shopping-list">
+            <div className="panel-heading">
+              <h2>Nguyên liệu cần mua</h2>
+              <span>{shoppingList.length} loại</span>
+            </div>
+            {shoppingList.length === 0 ? (
+              <p className="empty-note">Chọn món trong lịch để tự tổng hợp nguyên liệu.</p>
+            ) : (
+              <ul>
+                {shoppingList.slice(0, 10).map((ingredient) => (
+                  <li key={ingredient.name}>
+                    <span>{ingredient.name}</span>
+                    <strong>{formatNumber(ingredient.gram)}g</strong>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </aside>
+      </main>
 
       {mealModalOpen && (
-        <div id="meal-modal" className="modal-makemeal" style={{ display: 'block' }}>
-          <div className="modal-content two-columns">
-            <span className="close-btn" onClick={() => setMealModalOpen(false)}>&times;</span>
-            <h2>Nhập thông tin cho bữa ăn</h2>
-
-            <form id="meal-form">
-              <label htmlFor="people-count">Số người ăn:</label>
-              <div className="quantity-control">
-                <button type="button" onClick={() => setPeopleCount(Math.max(1, peopleCount - 1))}>-</button>
-                <input
-                  type="number"
-                  value={peopleCount}
-                  onChange={(e) => setPeopleCount(Math.max(1, parseInt(e.target.value, 10)))}
-                  min="1"
-                />
-                <button type="button" onClick={() => setPeopleCount(peopleCount + 1)}>+</button>
+        <div className="meal-modal-overlay" role="dialog" aria-modal="true">
+          <div className="meal-modal-panel">
+            <div className="modal-heading">
+              <div>
+                <p>{activeSlot?.dayOfWeek}</p>
+                <h2>{activeSlot?.mealTime}</h2>
               </div>
+              <button type="button" className="close-modal-btn" onClick={() => setMealModalOpen(false)}>×</button>
+            </div>
 
-              <label htmlFor="has-children">
-                <input
-                  type="checkbox"
-                  id="has-children"
-                  checked={hasChildren}
-                  onChange={() => setHasChildren(!hasChildren)}
-                />
-                Có trẻ em?
-              </label>
-
-              {hasChildren && (
-                <div className="children-count">
-                  <label htmlFor="children-count">Số lượng trẻ em:</label>
-                  <div className="quantity-control">
-                    <button
-                      type="button"
-                      onClick={() => handleChildrenCountChange(Math.max(0, childrenCount - 1))}
-                    >
-                      -
-                    </button>
-                    <input
-                      type="number"
-                      value={childrenCount}
-                      onChange={(e) => handleChildrenCountChange(Math.max(0, parseInt(e.target.value, 10)))}
-                      min="0"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => handleChildrenCountChange(childrenCount + 1)}
-                    >
-                      +
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {selectedMeals.map((selectedMeal, index) => (
-                <div key={index} className="meal-search">
+            <div className="modal-body">
+              <section className="meal-catalog">
+                <label>
+                  <span>Tìm món</span>
                   <input
-                    id="search"
-                    type="text"
-                    placeholder="Tìm món ăn..."
-                    value={mealSearches[index] || ''}
-                    onChange={(e) => handleSearchChange(index, e.target.value)}
+                    type="search"
+                    placeholder="Nhập tên món..."
+                    value={mealSearchTerm}
+                    onChange={(event) => setMealSearchTerm(event.target.value)}
                   />
-                  <div className="button-row">
-                    {mealSearches[index] && (
-                      <button
-                        style={{ backgroundColor: 'green' }}
-                        type="button"
-                        className="reset-icon"
-                        onClick={() => resetSearch(index)}
-                      >
-                        &times;
-                      </button>
-                    )}
-                    <div className="meal-options">
-                      {meals
-                        .filter((meal) => meal.foodName.toLowerCase().includes(mealSearches[index]?.toLowerCase()))
-                        .map((meal, idx) => (
-                          <button
-                            key={meal.foodId || `${meal.foodName}-${idx}`}
-                            style={{ marginLeft: 5, marginBottom: 5 }}
-                            type="button"
-                            onClick={() => handleMealSelection(meal, index)}
-                          >
-                            {meal.foodName}
-                          </button>
-                        ))}
-                    </div>
-                  </div>
+                </label>
 
-
-                  {selectedMeal && (
-                    <div className="meal-details">
-                      <br />
-                      <p><strong>Mô tả:</strong> {selectedMeal.description}</p>
-                      <img src={selectedMeal.image} alt={selectedMeal.foodName} style={{ width: '250px', height: 'auto', borderRadius: 15 }} />
-                      <ul className="ingredient-list">
-                        {selectedMeal.ingredients.map((ingredient) => (
-                          <li key={ingredient.ingredientId}>
-                            {ingredient.ingredientName} - {ingredient.gram * selectedMeal.quantity} gram
-                          </li>
-                        ))}
-                      </ul>
-
-                      <div className="meal-quantity">
-                        <button type="button" onClick={() => decreaseQuantity(index)}>-</button>
-                        <input
-                          type="number1"
-                          value={selectedMeal.quantity || 1}
-                          onChange={(e) => handleQuantityChange(index, parseInt(e.target.value, 10))}
-                          min="1"
-                        />
-                        <button type="button" onClick={() => increaseQuantity(index)}>+</button>
-                      </div>
-                      <button
-                        type="button"
-                        className="remove-meal-btn"
-                        onClick={() => removeMeal(index)}
-                      >
-                        ❌
-                      </button>
-                    </div>
-                  )}
-                </div>
-
-              ))}
-
-              <br />
-              <div className="modal-footer">
-                <button type="button" onClick={addNewMeal}>Thêm món mới</button>
-                <button style={{ backgroundColor: 'green', marginLeft: 5 }} type="button" className="save-btn" onClick={handleSaveMeal}>Lưu</button>
-              </div>
-
-              {showWarning && <p className="warning-text">Vui lòng chọn ít nhất một món ăn!</p>}
-              {formWarning && <p className="warning-text">Vui lòng chọn món ăn cho tất cả các bữa ăn!</p>}
-
-              <div className="selected-meals">
-                <h3>Các món đã chọn:</h3>
-                {selectedMeals.map((meal, index) => (
-                  meal && (
-                    <div key={meal.foodId} className="selected-meal-item">
-                      <button
-                        className="remove-meal-btn"
-                        onClick={() => removeMeal(index)}
-                        title="Xóa món"
-                      >
-                        &times;
-                      </button>
-                      <img
-                        src={meal.image}
-                        alt={meal.foodName}
-                        style={{ width: '50px', height: '50px', borderRadius: '5px', marginRight: '10px' }}
-                      />
+                <div className="catalog-list">
+                  {filteredMeals.map((meal) => (
+                    <button type="button" key={meal.Fid} className="catalog-item" onClick={() => addMealToSelection(meal)}>
                       <span>{meal.foodName}</span>
-                      <span style={{ marginLeft: '10px' }}>x{meal.quantity}</span>
-                      <span style={{ marginLeft: '10px', color: '#555' }}>({meal.foodCalories} calo mỗi phần)</span>
-                    </div>
-                  )
-                ))}
-              </div>
-              <div className="summary">
-                <div className="summary-card">
-                  <p className="summary-item">Tổng calo cần đạt: <b>{totalStandardCalories}</b> calo</p>
-                  <p className="summary-item">Tổng calo đã chọn: <b>{totalSelectedCalories}</b> calo</p>
-                  <p className={`summary-item ${calorieDifference >= 0 ? 'calorie-positive' : 'calorie-negative'}`}>
-                    {calorieDifference >= 0
-                      ? <><span role="img" aria-label="check" className="icon">✔️</span>Dư thừa {calorieDifference} calo</>
-                      : <><span role="img" aria-label="warning" className="icon">⚠️</span>Thiếu hụt {Math.abs(calorieDifference)} calo</>}
-                  </p>
-                  <p className="summary-item">Tổng chi phí: <b>{totalCost}</b> VNĐ</p>
+                      <small>{formatCalories(meal.foodCalories)} · {formatCurrency(meal.foodPrice)}đ</small>
+                    </button>
+                  ))}
                 </div>
-              </div>
+              </section>
 
-            </form>
+              <section className="selected-panel">
+                <div className="panel-heading">
+                  <h3>Món trong bữa</h3>
+                  <span>{formatCalories(getMealsTotalCalories(selectedMeals))}</span>
+                </div>
+
+                {selectedMeals.length === 0 ? (
+                  <p className="empty-note">Chưa có món nào cho bữa này.</p>
+                ) : (
+                  <div className="selected-list">
+                    {selectedMeals.map((meal, index) => (
+                      <div className="selected-row" key={`${meal.foodId}-${index}`}>
+                        <div>
+                          <strong>{meal.foodName}</strong>
+                          <span>{formatCurrency(meal.foodPrice)}đ · {formatCalories(meal.foodCalories)}/phần</span>
+                        </div>
+                        <div className="quantity-editor">
+                          <button type="button" onClick={() => updateSelectedMealQuantity(index, meal.quantity - 1)}>-</button>
+                          <input
+                            type="number"
+                            min="1"
+                            value={meal.quantity}
+                            onChange={(event) => updateSelectedMealQuantity(index, event.target.value)}
+                          />
+                          <button type="button" onClick={() => updateSelectedMealQuantity(index, meal.quantity + 1)}>+</button>
+                        </div>
+                        <button type="button" className="remove-row-btn" onClick={() => removeSelectedMeal(index)}>×</button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <div className="slot-total">
+                  <span>Chi phí bữa</span>
+                  <strong>{formatCurrency(getMealsTotalCost(selectedMeals))}đ</strong>
+                </div>
+                <div className="slot-total">
+                  <span>So với mục tiêu</span>
+                  <strong>{formatCalorieDifference(getMealsTotalCalories(selectedMeals) - mealTargetCalories)}</strong>
+                </div>
+                {modalWarning && <p className="modal-warning">{modalWarning}</p>}
+              </section>
+            </div>
+
+            <div className="modal-footer">
+              <button type="button" className="secondary-action" onClick={() => setMealModalOpen(false)}>Hủy</button>
+              <button type="button" className="primary-action" onClick={saveSlotMeals}>Lưu bữa này</button>
+            </div>
           </div>
         </div>
       )}

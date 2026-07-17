@@ -22,6 +22,19 @@ db.connect(err => {
     return;
   }
   console.log('Connected to MySQL');
+
+  db.query("SHOW COLUMNS FROM MealPlan LIKE 'plan_name'", (columnErr, columns) => {
+    if (columnErr) {
+      console.error('Error checking MealPlan plan_name column:', columnErr);
+      return;
+    }
+
+    if (columns.length === 0) {
+      db.query("ALTER TABLE MealPlan ADD COLUMN plan_name VARCHAR(100) NULL AFTER id", (alterErr) => {
+        if (alterErr) console.error('Error adding MealPlan plan_name column:', alterErr);
+      });
+    }
+  });
 });
 
 // Login API
@@ -122,9 +135,194 @@ app.get('/food-items', (req, res) => {
   });
 });
 
+const mealTimes = ['Bữa sáng', 'Bữa trưa', 'Bữa chiều'];
+const daysOfWeek = ['Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy', 'Chủ Nhật'];
+
+const isValidDate = (value) => {
+  const date = new Date(value);
+  return value && !Number.isNaN(date.getTime());
+};
+
+const toPositiveInt = (value) => {
+  const parsed = Number(value);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
+};
+
+const validateMealPlanPayload = (body) => {
+  const mealPlanId = body.mealPlanId ? toPositiveInt(body.mealPlanId) : null;
+  const planName = String(body.planName || '').trim().slice(0, 100);
+  const peopleCount = toPositiveInt(body.peopleCount);
+  const childrenCount = Number(body.childrenCount);
+  const totalCost = Number(body.totalCost);
+
+  if (!isValidDate(body.dateRangeStart) || !isValidDate(body.dateRangeEnd)) {
+    return { error: 'Start date and end date are required' };
+  }
+
+  if (new Date(body.dateRangeStart) > new Date(body.dateRangeEnd)) {
+    return { error: 'Start date must be before or equal to end date' };
+  }
+
+  if (!peopleCount) {
+    return { error: 'People count must be greater than 0' };
+  }
+
+  if (!Number.isInteger(childrenCount) || childrenCount < 0) {
+    return { error: 'Children count must be a non-negative integer' };
+  }
+
+  if (!Number.isFinite(totalCost) || totalCost < 0) {
+    return { error: 'Total cost must be a valid non-negative number' };
+  }
+
+  if (!Array.isArray(body.meals) || body.meals.length === 0) {
+    return { error: 'At least one meal is required' };
+  }
+
+  const meals = [];
+  for (const meal of body.meals) {
+    const foodId = toPositiveInt(meal.foodId);
+    const quantity = toPositiveInt(meal.quantity);
+
+    if (!mealTimes.includes(meal.mealTime) || !daysOfWeek.includes(meal.dayOfWeek)) {
+      return { error: 'Meal time or day of week is invalid' };
+    }
+
+    if (!foodId || !quantity) {
+      return { error: 'Food ID and quantity must be positive integers' };
+    }
+
+    meals.push({
+      mealTime: meal.mealTime,
+      dayOfWeek: meal.dayOfWeek,
+      foodId,
+      quantity,
+    });
+  }
+
+  return {
+    value: {
+      mealPlanId,
+      planName,
+      dateRangeStart: body.dateRangeStart,
+      dateRangeEnd: body.dateRangeEnd,
+      peopleCount,
+      childrenCount,
+      totalCost,
+      meals,
+    },
+  };
+};
+
+const rollbackWithResponse = (res, message, error, status = 500) => {
+  db.rollback(() => {
+    if (error) console.error(message, error);
+    res.status(status).json({ error: message });
+  });
+};
+
 
 // Save Meal Plan API
 app.post('/save-meal-plan', (req, res) => {
+  const validation = validateMealPlanPayload(req.body);
+  if (validation.error) {
+    return res.status(400).json({ error: validation.error });
+  }
+
+  const { mealPlanId, planName, dateRangeStart, dateRangeEnd, peopleCount, childrenCount, totalCost, meals } = validation.value;
+  const foodIds = [...new Set(meals.map((meal) => meal.foodId))];
+
+  db.beginTransaction((transactionErr) => {
+    if (transactionErr) {
+      console.error('Error starting transaction:', transactionErr);
+      return res.status(500).json({ error: 'Server error while starting meal plan save' });
+    }
+
+    db.query('SELECT Fid FROM FoodItems WHERE Fid IN (?)', [foodIds], (foodErr, foodRows) => {
+      if (foodErr) {
+        return rollbackWithResponse(res, 'Server error while validating food items', foodErr);
+      }
+
+      if (foodRows.length !== foodIds.length) {
+        return rollbackWithResponse(res, 'One or more selected food items do not exist', null, 400);
+      }
+
+      const saveDetails = (targetMealPlanId, successMessage) => {
+        const mealPlanDetails = meals.map((meal) => [
+          targetMealPlanId,
+          meal.mealTime,
+          meal.dayOfWeek,
+          meal.foodId,
+          meal.quantity,
+        ]);
+
+        const insertMealPlanDetailsQuery = `
+          INSERT INTO MealPlanDetail (meal_plan_id, meal_time, day_of_week, food_id, quantity)
+          VALUES ?
+        `;
+
+        db.query(insertMealPlanDetailsQuery, [mealPlanDetails], (detailErr) => {
+          if (detailErr) {
+            return rollbackWithResponse(res, 'Server error while saving meal details', detailErr);
+          }
+
+          db.commit((commitErr) => {
+            if (commitErr) {
+              return rollbackWithResponse(res, 'Server error while committing meal plan', commitErr);
+            }
+
+            res.json({
+              success: true,
+              message: successMessage,
+              newMealPlanId: targetMealPlanId,
+            });
+          });
+        });
+      };
+
+      if (mealPlanId) {
+        const updateMealPlanQuery = `
+          UPDATE MealPlan
+          SET plan_name = ?, date_range_start = ?, date_range_end = ?, people_count = ?, children_count = ?, total_cost = ?
+          WHERE id = ?
+        `;
+
+        db.query(updateMealPlanQuery, [planName, dateRangeStart, dateRangeEnd, peopleCount, childrenCount, totalCost, mealPlanId], (updateErr, updateResult) => {
+          if (updateErr) {
+            return rollbackWithResponse(res, 'Server error while updating meal plan', updateErr);
+          }
+
+          if (updateResult.affectedRows === 0) {
+            return rollbackWithResponse(res, 'Meal plan not found', null, 404);
+          }
+
+          db.query('DELETE FROM MealPlanDetail WHERE meal_plan_id = ?', [mealPlanId], (deleteErr) => {
+            if (deleteErr) {
+              return rollbackWithResponse(res, 'Server error while updating meal details', deleteErr);
+            }
+
+            saveDetails(mealPlanId, 'Meal plan updated successfully');
+          });
+        });
+      } else {
+        const insertMealPlanQuery = `
+          INSERT INTO MealPlan (plan_name, date_range_start, date_range_end, people_count, children_count, total_cost)
+          VALUES (?, ?, ?, ?, ?, ?)
+        `;
+
+        db.query(insertMealPlanQuery, [planName, dateRangeStart, dateRangeEnd, peopleCount, childrenCount, totalCost], (insertErr, insertResult) => {
+          if (insertErr) {
+            return rollbackWithResponse(res, 'Server error while creating new meal plan', insertErr);
+          }
+
+          saveDetails(insertResult.insertId, 'Meal plan created successfully');
+        });
+      }
+    });
+  });
+});
+
+app.post('/save-meal-plan-legacy', (req, res) => {
   const { mealPlanId, dateRangeStart, dateRangeEnd, peopleCount, childrenCount, totalCost, meals } = req.body;
 
   if (mealPlanId) {
@@ -233,6 +431,44 @@ app.post('/save-meal-plan', (req, res) => {
 });
 
 app.delete('/delete-meal-plan/:id', (req, res) => {
+  const id = toPositiveInt(req.params.id);
+  if (!id) {
+    return res.status(400).json({ error: 'Meal plan ID is invalid' });
+  }
+
+  db.beginTransaction((transactionErr) => {
+    if (transactionErr) {
+      console.error('Error starting delete transaction:', transactionErr);
+      return res.status(500).json({ error: 'Server error while starting meal plan delete' });
+    }
+
+    db.query('DELETE FROM MealPlanDetail WHERE meal_plan_id = ?', [id], (detailErr) => {
+      if (detailErr) {
+        return rollbackWithResponse(res, 'Server error while deleting meal plan details', detailErr);
+      }
+
+      db.query('DELETE FROM MealPlan WHERE id = ?', [id], (planErr, planResult) => {
+        if (planErr) {
+          return rollbackWithResponse(res, 'Server error while deleting meal plan', planErr);
+        }
+
+        if (planResult.affectedRows === 0) {
+          return rollbackWithResponse(res, 'Meal plan not found', null, 404);
+        }
+
+        db.commit((commitErr) => {
+          if (commitErr) {
+            return rollbackWithResponse(res, 'Server error while committing meal plan delete', commitErr);
+          }
+
+          res.json({ success: true, message: 'Meal plan deleted successfully' });
+        });
+      });
+    });
+  });
+});
+
+app.delete('/delete-meal-plan-legacy/:id', (req, res) => {
   const { id } = req.params;
 
   const deleteDetailsQuery = `DELETE FROM MealPlanDetail WHERE meal_plan_id = ?`;
@@ -270,10 +506,12 @@ app.get('/meal-plan', (req, res) => {
 
     // Query to fetch details for all meal plans
     const queryMealPlanDetails = `
-      SELECT mpd.meal_plan_id, mpd.meal_time, mpd.day_of_week, mpd.food_id, mpd.quantity, fi.name AS foodName
+      SELECT mpd.meal_plan_id, mpd.meal_time, mpd.day_of_week, mpd.food_id, mpd.quantity,
+             fi.name AS foodName, fi.image, fi.description, fi.price AS foodPrice, fi.calories AS foodCalories
       FROM MealPlanDetail mpd
       JOIN FoodItems fi ON mpd.food_id = fi.Fid
       WHERE mpd.meal_plan_id IN (?)
+      ORDER BY mpd.meal_plan_id DESC, mpd.id ASC
     `;
 
     db.query(queryMealPlanDetails, [mealPlanIds], (err, details) => {
@@ -295,7 +533,11 @@ app.get('/meal-plan', (req, res) => {
             dayOfWeek: detail.day_of_week,
             foodId: detail.food_id,
             quantity: detail.quantity,
-            foodName: detail.foodName
+            foodName: detail.foodName,
+            image: detail.image,
+            description: detail.description,
+            foodPrice: detail.foodPrice,
+            foodCalories: detail.foodCalories
           });
         }
       });
