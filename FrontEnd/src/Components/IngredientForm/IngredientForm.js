@@ -1,366 +1,353 @@
-import React, { useState, useEffect } from "react";
-import axios from "axios";
-import "./IngredientForm.css";
+import React, { useEffect, useMemo, useState } from 'react';
+import axios from 'axios';
+import './IngredientForm.css';
 import TaskBar from '../TaskBar/TaskBar';
 import Snowfall from '../Snowfall/SnowFall';
+import { formatCalories, formatCurrency, formatGram, toNumber } from '../../utils/format';
+
+const API_URL = 'http://localhost:3060';
+
+const emptyForm = {
+  name: '',
+  image: '',
+  description: '',
+};
+
+const normalizeDish = (dish) => ({
+  Fid: dish.Fid,
+  name: dish.name || dish.foodName || '',
+  image: dish.image || '',
+  description: dish.description || '',
+  price: toNumber(dish.price ?? dish.foodPrice),
+  calories: toNumber(dish.calories ?? dish.foodCalories),
+});
+
 const IngredientForm = () => {
   const [dishes, setDishes] = useState([]);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [formData, setFormData] = useState({
-    name: "",
-    image: "",
-    description: "",
-    price: "",
-    calories: "",
-  });
-  const [editingDishId, setEditingDishId] = useState(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedDish, setSelectedDish] = useState(null);
-  const [sortOrder, setSortOrder] = useState("asc");
-  const [selectedIngredients, setSelectedIngredients] = useState([]);
   const [ingredients, setIngredients] = useState([]);
-  const [ingredientSearchTerm, setIngredientSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState('');
+  const [sortOrder, setSortOrder] = useState('asc');
+  const [minCalorieFilter, setMinCalorieFilter] = useState('');
+  const [maxCalorieFilter, setMaxCalorieFilter] = useState('');
+  const [formData, setFormData] = useState(emptyForm);
+  const [editingDishId, setEditingDishId] = useState(null);
+  const [selectedIngredients, setSelectedIngredients] = useState([]);
+  const [ingredientSearchTerm, setIngredientSearchTerm] = useState('');
+  const [selectedDish, setSelectedDish] = useState(null);
+  const [dishToDeleteId, setDishToDeleteId] = useState(null);
+  const [message, setMessage] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const dishesPerPage = 9;
+
+  const fetchDishes = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/dishes`);
+      setDishes((response.data || []).map(normalizeDish));
+    } catch (error) {
+      console.error('Error fetching dishes:', error);
+      setMessage('Không thể tải danh sách món ăn.');
+    }
+  };
+
+  const fetchIngredients = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/ingredients`);
+      setIngredients(response.data || []);
+    } catch (error) {
+      console.error('Error fetching ingredients:', error);
+      setMessage('Không thể tải danh sách nguyên liệu.');
+    }
+  };
 
   useEffect(() => {
     fetchDishes();
     fetchIngredients();
   }, []);
 
-  const fetchDishes = async () => {
-    try {
-      const response = await axios.get("http://localhost:3060/dishes");
-      setDishes(response.data);
-    } catch (error) {
-      console.error("Error fetching dishes:", error);
-    }
-  };
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, minCalorieFilter, maxCalorieFilter, sortOrder]);
 
-  const fetchIngredients = async () => {
-    try {
-      const response = await axios.get("http://localhost:3060/ingredients");
-      setIngredients(response.data);
-    } catch (error) {
-      console.error("Error fetching ingredients:", error);
-    }
-  };
+  const selectedTotals = useMemo(() => {
+    return selectedIngredients.reduce((totals, ingredient) => {
+      const gram = toNumber(ingredient.gram);
+      return {
+        calories: totals.calories + (gram / 100) * toNumber(ingredient.calories),
+        price: totals.price + (gram / 1000) * toNumber(ingredient.price),
+      };
+    }, { calories: 0, price: 0 });
+  }, [selectedIngredients]);
 
-  const handleSearchChange = (e) => {
-    const value = e.target.value;
-    setSearchTerm(value);
+  const filteredDishes = useMemo(() => {
+    const keyword = searchTerm.trim().toLowerCase();
+    const minCalories = minCalorieFilter === '' ? 0 : toNumber(minCalorieFilter);
+    const maxCalories = maxCalorieFilter === '' ? Infinity : toNumber(maxCalorieFilter, Infinity);
 
-    if (value.trim() === "") {
-      fetchDishes();
-    } else {
-      const filteredDishes = dishes.filter((dish) =>
-        dish.name.toLowerCase().startsWith(value.toLowerCase())
-      );
-      setDishes(filteredDishes);
-    }
-  };
+    return dishes
+      .filter((dish) => dish.name.toLowerCase().includes(keyword))
+      .filter((dish) => dish.calories >= minCalories && dish.calories <= maxCalories)
+      .sort((a, b) => sortOrder === 'asc' ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name));
+  }, [dishes, maxCalorieFilter, minCalorieFilter, searchTerm, sortOrder]);
 
-  const handleOpenAddModal = () => {
+  const currentDishes = filteredDishes.slice((currentPage - 1) * dishesPerPage, currentPage * dishesPerPage);
+  const totalPages = Math.max(1, Math.ceil(filteredDishes.length / dishesPerPage));
+
+  const resetForm = () => {
+    setFormData(emptyForm);
+    setSelectedIngredients([]);
+    setIngredientSearchTerm('');
     setEditingDishId(null);
-    setFormData({
-      name: "",
-      image: "",
-      description: "",
-      price: "",
-      calories: "",
-    });
-    setSelectedIngredients([]); // Reset selected ingredients
+  };
+
+  const openAddModal = () => {
+    resetForm();
     setIsModalOpen(true);
   };
 
-  const handleOpenEditModal = async (dish) => {
-    setEditingDishId(dish.Fid);
-
+  const openEditModal = async (dish) => {
     try {
-      // Fetch dish details
-      const dishResponse = await axios.get(`http://localhost:3060/food-items/${dish.Fid}`);
-      const dishDetails = dishResponse.data;
-
-      // Set form data
+      const response = await axios.get(`${API_URL}/food-items/${dish.Fid}`);
+      const dishDetails = response.data;
+      setEditingDishId(dish.Fid);
       setFormData({
         name: dishDetails.foodName,
         image: dishDetails.image,
         description: dishDetails.description,
-        price: dishDetails.foodPrice,
-        calories: dishDetails.foodCalories,
       });
-
-      // Set selected ingredients with fetched data
-      setSelectedIngredients(dishDetails.ingredients.map(ingredient => ({
+      setSelectedIngredients((dishDetails.ingredients || []).map((ingredient) => ({
         id: ingredient.ingredientId,
         name: ingredient.ingredientName,
-        gram: ingredient.gram,
         calories: ingredient.ingredientCalories,
         price: ingredient.ingredientPrice,
-        totalCalo: ingredient.totalCalo,
+        gram: ingredient.gram,
       })));
-
+      setIsModalOpen(true);
     } catch (error) {
-      console.error("Error fetching dish details for editing:", error);
+      console.error('Error fetching dish details:', error);
+      setMessage('Không thể mở món để chỉnh sửa.');
     }
-
-    setIsModalOpen(true);
   };
 
-  const handleAddDish = async () => {
+  const closeModal = () => {
+    setIsModalOpen(false);
+    resetForm();
+  };
+
+  const saveDish = async () => {
+    if (!formData.name.trim()) {
+      setMessage('Tên món ăn là bắt buộc.');
+      return;
+    }
+
+    if (selectedIngredients.length === 0) {
+      setMessage('Hãy chọn ít nhất một nguyên liệu.');
+      return;
+    }
+
+    const payload = {
+      ...formData,
+      price: selectedTotals.price,
+      calories: selectedTotals.calories,
+    };
+
     try {
-      const totalCalories = calculateTotalCalories();
-      const totalPrice = calculateTotalPrice();
+      const dishResponse = editingDishId
+        ? await axios.put(`${API_URL}/dishes/${editingDishId}`, payload).then(() => ({ data: { dishId: editingDishId } }))
+        : await axios.post(`${API_URL}/dishes`, payload);
 
-      const newDish = {
-        ...formData,
-        calories: totalCalories,
-        price: totalPrice,
-      };
-
-      const dishResponse = await axios.post("http://localhost:3060/dishes", newDish);
       const dishId = dishResponse.data.dishId;
+      if (editingDishId) {
+        await axios.delete(`${API_URL}/foodItems_ingredient/${editingDishId}`);
+      }
 
-      const ingredientPromises = selectedIngredients.map(ingredient => {
-        return axios.post("http://localhost:3060/foodItems_ingredient", {
+      await Promise.all(selectedIngredients.map((ingredient) => {
+        const gram = toNumber(ingredient.gram);
+        return axios.post(`${API_URL}/foodItems_ingredient`, {
           mid: dishId,
           Iid: ingredient.id,
-          gram: ingredient.gram,
-          totalCalo: ingredient.totalCalo,
+          gram,
+          totalCalo: (gram / 100) * toNumber(ingredient.calories),
         });
-      });
+      }));
 
-      await Promise.all(ingredientPromises);
-      fetchDishes();
-      setIsModalOpen(false);
-      setSelectedIngredients([]);
-      setIngredientSearchTerm("");
+      await fetchDishes();
+      setMessage(editingDishId ? 'Đã cập nhật món ăn.' : 'Đã thêm món ăn mới.');
+      closeModal();
     } catch (error) {
-      console.error("Error adding dish:", error);
+      console.error('Error saving dish:', error);
+      setMessage('Không thể lưu món ăn.');
     }
   };
 
-  const handleEditDish = async () => {
+  const deleteDish = async () => {
+    if (!dishToDeleteId) return;
+
     try {
-      const totalCalories = calculateTotalCalories();
-      const totalPrice = calculateTotalPrice();
-
-      const updatedDish = {
-        ...formData,
-        calories: totalCalories,
-        price: totalPrice,
-      };
-
-      await axios.put(`http://localhost:3060/dishes/${editingDishId}`, updatedDish);
-      await axios.delete(`http://localhost:3060/foodItems_ingredient/${editingDishId}`);
-
-      const ingredientPromises = selectedIngredients.map(ingredient => {
-        return axios.post("http://localhost:3060/foodItems_ingredient", {
-          mid: editingDishId,
-          Iid: ingredient.id,
-          gram: ingredient.gram,
-          totalCalo: ingredient.totalCalo,
-        });
-      });
-
-      await Promise.all(ingredientPromises);
-      fetchDishes();
-      setIsModalOpen(false);
-      setSelectedIngredients([]);
-      setIngredientSearchTerm("");
+      await axios.delete(`${API_URL}/dishes/${dishToDeleteId}`);
+      await fetchDishes();
+      setMessage('Đã xóa món ăn.');
     } catch (error) {
-      console.error("Error updating dish:", error);
+      console.error('Error deleting dish:', error);
+      setMessage('Không thể xóa món ăn.');
+    } finally {
+      setDishToDeleteId(null);
     }
-  };
-
-  const handleDeleteDish = async (id) => {
-    try {
-      await axios.delete(`http://localhost:3060/dishes/${id}`);
-      fetchDishes();
-    } catch (error) {
-      console.error("Error deleting dish:", error);
-    }
-  };
-
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
-    setEditingDishId(null);
-    setSelectedIngredients([]); // Reset selected ingredients when closing modal
-  };
-
-  const handleIngredientSearchChange = (e) => {
-    setIngredientSearchTerm(e.target.value);
   };
 
   const addIngredient = (ingredient) => {
-    if (!selectedIngredients.find(i => i.id === ingredient.id)) {
-      setSelectedIngredients([...selectedIngredients, { ...ingredient, gram: 0 }]);
-      setIngredientSearchTerm(""); // Đặt lại giá trị của ingredientSearchTerm
-    }
+    if (selectedIngredients.some((item) => item.id === ingredient.id)) return;
+    setSelectedIngredients((currentIngredients) => [...currentIngredients, { ...ingredient, gram: 100 }]);
+    setIngredientSearchTerm('');
   };
 
-  const removeIngredient = (ingredientId) => {
-    setSelectedIngredients(selectedIngredients.filter(i => i.id !== ingredientId));
+  const updateIngredientGram = (ingredientId, gram) => {
+    setSelectedIngredients((currentIngredients) =>
+      currentIngredients.map((ingredient) =>
+        ingredient.id === ingredientId ? { ...ingredient, gram: Math.max(0, toNumber(gram)) } : ingredient
+      )
+    );
   };
 
-  const handleGramChange = (ingredientId, gram) => {
-    setSelectedIngredients(prevIngredients => {
-      return prevIngredients.map(ingredient => {
-        if (ingredient.id === ingredientId) {
-          const totalCalo = (gram / 100) * ingredient.calories;
-          return { ...ingredient, gram, totalCalo };
-        }
-        return ingredient;
-      });
-    });
-  };
-
-  const calculateTotalCalories = () => {
-    return selectedIngredients.reduce((total, ingredient) => total + (ingredient.totalCalo || 0), 0);
-  };
-
-  const calculateTotalPrice = () => {
-    return selectedIngredients.reduce((total, ingredient) => total + (ingredient.price * (ingredient.gram / 1000) || 0), 0);
-  };
-
-  const sortDishes = (order) => {
-    const sortedDishes = [...dishes];
-    sortedDishes.sort((a, b) => {
-      if (order === "asc") {
-        return a.name.localeCompare(b.name);
-      } else {
-        return b.name.localeCompare(a.name);
-      }
-    });
-    setDishes(sortedDishes);
-  };
-
-  const handleSortToggle = () => {
-    const newSortOrder = sortOrder === "asc" ? "desc" : "asc";
-    setSortOrder(newSortOrder);
-    sortDishes(newSortOrder);
-  };
-
-  const handleOpenDetailModal = async (dishId) => {
+  const openDetailModal = async (dishId) => {
     try {
-      const response = await axios.get(`http://localhost:3060/food-items/${dishId}`);
+      const response = await axios.get(`${API_URL}/food-items/${dishId}`);
       setSelectedDish(response.data);
     } catch (error) {
-      console.error("Error fetching dish details:", error);
+      console.error('Error fetching dish details:', error);
+      setMessage('Không thể tải chi tiết món ăn.');
     }
   };
 
-  const handleCloseDetailModal = () => {
-    setSelectedDish(null);
-  };
+  const ingredientSuggestions = ingredients
+    .filter((ingredient) => ingredient.name.toLowerCase().includes(ingredientSearchTerm.toLowerCase()))
+    .slice(0, 8);
 
   return (
-    <div><TaskBar></TaskBar>
+    <div>
+      <TaskBar />
       <Snowfall />
-      <div className="ingredient-form">
 
-        <h1 className="ingredient-h1">Nguyên liệu món ăn</h1>
+      <div className="ingredient-form">
+        <h1 className="ingredient-h1">Quản lý món ăn và nguyên liệu</h1>
 
         <div className="search-bar-ingredient">
           <input
             type="text"
-            placeholder="Tìm kiếm..."
+            placeholder="Tìm món ăn..."
             value={searchTerm}
-            onChange={handleSearchChange}
+            onChange={(event) => setSearchTerm(event.target.value)}
+          />
+        </div>
+
+        <div className="calorie-filter">
+          <input
+            type="number"
+            placeholder="Calo tối thiểu"
+            value={minCalorieFilter}
+            onChange={(event) => setMinCalorieFilter(event.target.value)}
+          />
+          <span>-</span>
+          <input
+            type="number"
+            placeholder="Calo tối đa"
+            value={maxCalorieFilter}
+            onChange={(event) => setMaxCalorieFilter(event.target.value)}
           />
         </div>
 
         <div className="button-group-ingredient">
-          <button className="sort-btn" onClick={handleSortToggle}>
-            Sort {sortOrder === "asc" ? "A-Z" : "Z-A"}
+          <button className="sort-btn" type="button" onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}>
+            {sortOrder === 'asc' ? 'A-Z' : 'Z-A'}
           </button>
-
-          <button className="add-dish-btn" onClick={handleOpenAddModal}>
+          <button className="add-dish-btn" type="button" onClick={openAddModal}>
             Thêm món ăn mới
           </button>
         </div>
 
+        {message && <p className="modal-message">{message}</p>}
+
         <div className="dishes-list">
-          {dishes.map((dish) => (
+          {currentDishes.map((dish) => (
             <div className="dish-card" key={dish.Fid}>
               <img src={dish.image} alt={dish.name} />
               <h3>{dish.name}</h3>
               <p>{dish.description}</p>
-              <p>Price: {dish.price} VND</p>
-              <p>Calories: {dish.calories} cal</p>
+              <p>{formatCurrency(dish.price)}</p>
+              <p>{formatCalories(dish.calories)}</p>
               <div className="card-buttons">
-                <button onClick={() => handleOpenDetailModal(dish.Fid)}>Details</button>
-                <button onClick={() => handleOpenEditModal(dish)}>Edit</button>
-                <button onClick={() => handleDeleteDish(dish.Fid)}>Delete</button>
+                <button type="button" onClick={() => openDetailModal(dish.Fid)}>Chi tiết</button>
+                <button type="button" onClick={() => openEditModal(dish)}>Sửa</button>
+                <button type="button" onClick={() => setDishToDeleteId(dish.Fid)}>Xóa</button>
               </div>
             </div>
+          ))}
+        </div>
+
+        <div className="pagination">
+          {Array.from({ length: totalPages }).map((_, index) => (
+            <button
+              key={index + 1}
+              type="button"
+              onClick={() => setCurrentPage(index + 1)}
+              className={currentPage === index + 1 ? 'active' : ''}
+            >
+              {index + 1}
+            </button>
           ))}
         </div>
 
         {isModalOpen && (
           <div className="modal-ingredient">
             <div className="modal-content-ingredient">
-              <h2>{editingDishId ? "Edit Dish" : "Add New Dish"}</h2>
+              <h2>{editingDishId ? 'Cập nhật món ăn' : 'Thêm món ăn'}</h2>
               <input
                 type="text"
-                name="name"
-                placeholder="Name"
+                placeholder="Tên món ăn"
                 value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                onChange={(event) => setFormData({ ...formData, name: event.target.value })}
               />
               <input
                 type="text"
-                name="image"
-                placeholder="Image URL"
+                placeholder="URL ảnh"
                 value={formData.image}
-                onChange={(e) => setFormData({ ...formData, image: e.target.value })}
+                onChange={(event) => setFormData({ ...formData, image: event.target.value })}
               />
               <textarea
-                name="description"
-                placeholder="Description"
+                placeholder="Mô tả"
                 value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                onChange={(event) => setFormData({ ...formData, description: event.target.value })}
               />
+
               <div className="price-calories-input">
-                <input
-                  type="number"
-                  name="price"
-                  placeholder="Price"
-                  value={calculateTotalPrice()} // Show calculated total price
-                  readOnly
-                />
-                <span>VND</span>
+                <input type="text" value={formatCurrency(selectedTotals.price)} readOnly />
+                <span>Chi phí</span>
               </div>
               <div className="price-calories-input">
-                <input
-                  type="number"
-                  name="calories"
-                  placeholder="Calories"
-                  value={calculateTotalCalories()} // Show calculated total calories
-                  readOnly
-                />
-                <span>Calories</span>
+                <input type="text" value={formatCalories(selectedTotals.calories)} readOnly />
+                <span>Calo</span>
               </div>
+
               <input
                 type="text"
-                placeholder="Search ingredients..."
+                placeholder="Tìm nguyên liệu..."
                 value={ingredientSearchTerm}
-                onChange={handleIngredientSearchChange}
+                onChange={(event) => setIngredientSearchTerm(event.target.value)}
               />
               {ingredientSearchTerm && (
                 <div className="dropdown">
                   <ul>
-                    {ingredients
-                      .filter((ingredient) =>
-                        ingredient.name.toLowerCase().includes(ingredientSearchTerm.toLowerCase())
-                      )
-                      .map((ingredient) => (
-                        <li key={ingredient.id} onClick={() => addIngredient(ingredient)}>
-                          {ingredient.name}
-                        </li>
-                      ))}
+                    {ingredientSuggestions.map((ingredient) => (
+                      <li key={ingredient.id} onClick={() => addIngredient(ingredient)}>
+                        {ingredient.name} - {formatCurrency(ingredient.price)}/kg
+                      </li>
+                    ))}
                   </ul>
                 </div>
               )}
-              <h3>Selected Ingredients:</h3>
+
+              <h3>Nguyên liệu đã chọn</h3>
               <ul className="selected-ingredients-list">
                 {selectedIngredients.map((ingredient) => (
                   <li className="ingredient-item" key={ingredient.id}>
@@ -368,19 +355,24 @@ const IngredientForm = () => {
                     <input
                       type="number"
                       value={ingredient.gram}
-                      onChange={(e) => handleGramChange(ingredient.id, parseInt(e.target.value, 10) || 0)}
-                      placeholder="Grams"
+                      onChange={(event) => updateIngredientGram(ingredient.id, event.target.value)}
+                      placeholder="Gram"
                       className="gram-input"
                     />
-                    <button className="remove-btn" onClick={() => removeIngredient(ingredient.id)}>Remove</button>
+                    <button
+                      className="remove-btn"
+                      type="button"
+                      onClick={() => setSelectedIngredients((currentIngredients) => currentIngredients.filter((item) => item.id !== ingredient.id))}
+                    >
+                      Xóa
+                    </button>
                   </li>
                 ))}
               </ul>
+
               <div className="modal-buttons">
-                <button onClick={editingDishId ? handleEditDish : handleAddDish}>
-                  {editingDishId ? "Update Dish" : "Add Dish"}
-                </button>
-                <button onClick={handleCloseModal}>Cancel</button>
+                <button type="button" onClick={saveDish}>{editingDishId ? 'Cập nhật' : 'Thêm món'}</button>
+                <button type="button" onClick={closeModal}>Hủy</button>
               </div>
             </div>
           </div>
@@ -393,18 +385,31 @@ const IngredientForm = () => {
               <img src={selectedDish.image} alt={selectedDish.foodName} className="dish-image" />
               <p className="dish-description">{selectedDish.description}</p>
               <div className="dish-info">
-                <p className="dish-price">Price: <span>{selectedDish.foodPrice} VND</span></p>
-                <p className="dish-calories">Calories: <span>{selectedDish.foodCalories} cal</span></p>
+                <p className="dish-price">Giá: <span>{formatCurrency(selectedDish.foodPrice)}</span></p>
+                <p className="dish-calories">Calo: <span>{formatCalories(selectedDish.foodCalories)}</span></p>
               </div>
-              <h3>Ingredients:</h3>
+              <h3>Nguyên liệu</h3>
               <ul className="ingredient-list">
-                {selectedDish.ingredients.map(ingredient => (
+                {(selectedDish.ingredients || []).map((ingredient) => (
                   <li key={ingredient.ingredientId} className="ingredient-item">
-                    {ingredient.ingredientName} - {ingredient.gram}g
+                    {ingredient.ingredientName} - {formatGram(ingredient.gram)}
                   </li>
                 ))}
               </ul>
-              <button className="close-btn" onClick={handleCloseDetailModal}>Close</button>
+              <button className="close-btn" type="button" onClick={() => setSelectedDish(null)}>Đóng</button>
+            </div>
+          </div>
+        )}
+
+        {dishToDeleteId && (
+          <div className="modal-ingredient">
+            <div className="modal-content-ingredient">
+              <h2>Xác nhận xóa món ăn</h2>
+              <p>Món bị xóa sẽ không còn dùng được trong các lần chọn mới.</p>
+              <div className="modal-buttons">
+                <button type="button" onClick={deleteDish}>Xóa</button>
+                <button type="button" onClick={() => setDishToDeleteId(null)}>Hủy</button>
+              </div>
             </div>
           </div>
         )}

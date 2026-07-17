@@ -29,6 +29,8 @@ body {
     position: absolute;
     top: 20px;
     left: 20px;
+    border: 0;
+    background: transparent;
     cursor: pointer;
     color: white;
     transition: transform 0.2s ease, color 0.2s ease;
@@ -134,4 +136,3 @@ body {
     text-align: center;
     padding: 20px;
   }
-  

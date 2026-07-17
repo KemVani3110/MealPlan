@@ -190,6 +190,7 @@
     cursor: pointer;
     border: 1px solid transparent;
     margin-right: 10px;
+    font-family: inherit;
 }
 
 .security-button:hover {
@@ -216,9 +217,18 @@
     cursor: pointer;
     border: 2px solid transparent;
     transition: transform 0.2s, border 0.2s;
+    padding: 0;
 }
 
 .theme-option:hover {
     transform: scale(1.1);
     border: 2px solid #fff;
+}
+
+.back-to-home {
+    border: 0;
+    background: transparent;
+    color: #ffffff;
+    cursor: pointer;
+    font-family: inherit;
 }

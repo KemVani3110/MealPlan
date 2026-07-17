@@ -1,6 +1,4 @@
-/* eslint-disable react-hooks/exhaustive-deps */
-/* eslint-disable jsx-a11y/anchor-is-valid */
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './TaskBar.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -16,7 +14,7 @@ const TaskBar = () => {
   const navigate = useNavigate();
 
   const toggleDropdown = () => {
-    setDropdownOpen(!dropdownOpen);
+    setDropdownOpen((open) => !open);
   };
 
   const toggleMusic = () => {
@@ -31,29 +29,30 @@ const TaskBar = () => {
   };
 
   useEffect(() => {
+    const audio = audioRef.current;
     const updateTime = () => {
-      setCurrentTime(audioRef.current.currentTime);
+      setCurrentTime(audio.currentTime);
     };
 
-    audioRef.current.addEventListener('timeupdate', updateTime);
+    audio.addEventListener('timeupdate', updateTime);
 
     return () => {
-      audioRef.current.removeEventListener('timeupdate', updateTime);
+      audio.removeEventListener('timeupdate', updateTime);
     };
   }, []);
 
-  const handleClickOutside = (event) => {
+  const handleClickOutside = useCallback((event) => {
     if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
       setDropdownOpen(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     document.addEventListener('mousedown', handleClickOutside);
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, []);
+  }, [handleClickOutside]);
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -81,23 +80,28 @@ const TaskBar = () => {
   const handleCommunity = () => {
     navigate('/community');
   };
+  const handleAbout = () => {
+    navigate('/aboutus');
+  };
+
   return (
     <div className='taskbar-container-custom'>
       <div className='taskbar-left-custom'>
-        <div className='taskbar-icon-custom'>
-          <i className="fa fa-home" onClick={handleHome}></i>
-        </div>
-        <div className='music-icon-custom' onClick={toggleMusic}>
+        <button className='taskbar-icon-custom' type="button" onClick={handleHome} aria-label="Trang chủ">
+          <i className="fa fa-home"></i>
+        </button>
+        <button className='music-icon-custom' type="button" onClick={toggleMusic}>
           <i className="fa fa-music"></i>
           <span className='music-text-custom'>{isPlaying ? 'Dừng nhạc' : 'Phát nhạc'}</span>
-        </div>
+        </button>
       </div>
       <div className='taskbar-right-custom'>
         <div className='taskbar-item-container-custom'>
-          <div className='taskbar-item-custom' onClick={handleMealPlan}>Lập Kế Hoạch</div>
-          <div className='taskbar-item-custom' onClick={handleIngredient}>Nguồn Nguyên Liệu</div>
-          <div className='taskbar-item-custom' onClick={handleMakeMeal}>Gợi ý chọn món</div>
-          <div className='taskbar-item-custom' onClick={handleCommunity}>Cộng Đồng Chia Sẽ</div>
+          <button className='taskbar-item-custom' type="button" onClick={handleMealPlan}>Lập kế hoạch</button>
+          <button className='taskbar-item-custom' type="button" onClick={handleIngredient}>Món & nguyên liệu</button>
+          <button className='taskbar-item-custom' type="button" onClick={handleMakeMeal}>Gợi ý món</button>
+          <button className='taskbar-item-custom' type="button" onClick={handleCommunity}>Cộng đồng</button>
+          <button className='taskbar-item-custom' type="button" onClick={handleAbout}>Giới thiệu</button>
         </div>
         <div className='user-profile-custom' onClick={toggleDropdown} ref={dropdownRef}>
           <img
@@ -112,12 +116,12 @@ const TaskBar = () => {
           </div>
           {dropdownOpen && (
             <div className='dropdown-menu-custom'>
-              <a onClick={handleInfoUser}>
+              <button type="button" onClick={handleInfoUser}>
                 <FontAwesomeIcon icon={faCog} /> Cài đặt
-              </a>
-              <a href='#' onClick={handleLogout}>
+              </button>
+              <button type="button" onClick={handleLogout}>
                 <FontAwesomeIcon icon={faSignOutAlt} /> Đăng xuất
-              </a>
+              </button>
             </div>
           )}
         </div>

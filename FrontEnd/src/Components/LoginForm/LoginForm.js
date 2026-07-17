@@ -1,4 +1,3 @@
-/* eslint-disable jsx-a11y/anchor-is-valid */
 import React, { useState } from "react";
 import {  useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -78,17 +77,6 @@ const LoginForm = () => {
         <div className="form-container sign-up">
           <form onSubmit={handleRegisterSubmit}>
             <h1>Tạo tài khoản</h1>
-            <div className="social-icons">
-              <a href="#" className="icon">
-                <i className="fa-brands fa-google-plus-g"></i>
-              </a>
-              <a href="#" className="icon">
-                <i className="fa-brands fa-facebook-f"></i>
-              </a>
-              <a href="#" className="icon">
-                <i className="fa-brands fa-github"></i>
-              </a>
-            </div>
             <span>Sử dụng UserID và Username để đăng ký</span>
             <input
               type="text"
@@ -125,17 +113,6 @@ const LoginForm = () => {
         <div className="form-container sign-in">
           <form onSubmit={handleLoginSubmit}>
             <h1>Đăng nhập</h1>
-            <div className="social-icons">
-              <a href="#" className="icon">
-                <i className="fa-brands fa-google-plus-g"></i>
-              </a>
-              <a href="#" className="icon">
-                <i className="fa-brands fa-facebook-f"></i>
-              </a>
-              <a href="#" className="icon">
-                <i className="fa-brands fa-github"></i>
-              </a>
-            </div>
             <span>Hoặc sử dụng Username và Password</span>
             <input
               type="text"
@@ -151,15 +128,6 @@ const LoginForm = () => {
               onChange={(e) => setPassword(e.target.value)}
               required
             />
-            <div className="forgot-section">
-              <span>
-                <input type="checkbox" id="checked" />
-                Remember Me
-              </span>
-              <span>
-                <a href="#">Forgot Password?</a>
-              </span>
-            </div>
             <button className="btn" type="submit">
               Login
             </button>

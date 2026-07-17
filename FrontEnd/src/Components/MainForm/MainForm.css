@@ -21,6 +21,9 @@ body {
   font-size: 24px;
   cursor: pointer;
   color: #007bff;
+  border: 0;
+  background: transparent;
+  padding: 0;
 }
 
 .notifications-panel {
@@ -113,6 +116,8 @@ body {
   border-radius: 50%;
   cursor: pointer;
   transition: background-color 0.3s ease;
+  border: 0;
+  padding: 0;
 }
 
 .dot.active {

@@ -13,9 +13,9 @@ const NotFound = () => {
                 <h1 className="text-center">404</h1>
               </div>
               <div className="contant_box_404">
-                <h3 className="h2">Look like you're lost</h3>
-                <p>The page you are looking for is not available!</p>
-                <Link to="/main" className="link_404">Go to Home</Link>
+                <h3 className="h2">Không tìm thấy trang</h3>
+                <p>Trang bạn đang mở không tồn tại hoặc đã được di chuyển.</p>
+                <Link to="/main" className="link_404">Về trang chính</Link>
               </div>
             </div>
           </div>

@@ -6,6 +6,8 @@
     max-width: 1200px;
     margin: auto;
     margin-top: 3%;
+    padding-top: 96px;
+    box-sizing: border-box;
 }
 
 .meal-prep-sidebar {
@@ -358,6 +360,16 @@
 
 .meal-prep-btn:hover {
     background-color: #218838;
+}
+
+.meal-prep-btn.subtle {
+    background-color: #ffffff;
+    color: #0f766e;
+    border: 1px solid #cfe3dc;
+}
+
+.meal-prep-btn.subtle:hover {
+    background-color: #eaf7f3;
 }
 
 .meal-prep-remove-btn {

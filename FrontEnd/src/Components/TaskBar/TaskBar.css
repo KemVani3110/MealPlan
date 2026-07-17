@@ -25,6 +25,7 @@
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
     /* Thêm bóng cho thanh TaskBar */
     z-index: 1000;
+    box-sizing: border-box;
     /* Hiển thị trên các phần tử khác */
 }
 
@@ -40,6 +41,8 @@
 
 /* Icon trong TaskBar */
 .taskbar-icon-custom {
+    border: 0;
+    color: #ffffff;
     padding: 15px;
     /* Khoảng cách cho icon */
     background: rgba(255, 255, 255, 0.1);
@@ -68,6 +71,8 @@
 
 /* Icon nhạc */
 .music-icon-custom {
+    border: 0;
+    color: #ffffff;
     display: flex;
     /* Bố trí icon nhạc bên trái */
     align-items: center;
@@ -123,10 +128,13 @@
     display: flex;
     /* Hiển thị các chức năng bên cạnh nhau */
     gap: 12px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
     /* Khoảng cách giữa các mục chức năng */
 }
 
 .taskbar-item-custom {
+    border: 0;
     padding: 12px 18px;
     /* Padding cho các mục chức năng */
     background: rgba(255, 255, 255, 0.1);
@@ -138,6 +146,7 @@
     transition: background 0.3s, transform 0.2s;
     /* Hiệu ứng chuyển màu nền và phóng to khi hover */
     font-size: 15px;
+    font-family: inherit;
     /* Kích thước chữ */
     color: #fff;
     /* Màu chữ */
@@ -204,12 +213,15 @@
     /* Hiệu ứng chuyển động mượt mà */
 }
 
-.dropdown-menu-custom a {
+.dropdown-menu-custom button {
     display: flex;
     /* Hiển thị các mục chiếm toàn bộ chiều rộng */
     align-items: center;
     /* Căn giữa icon và text */
     color: #333;
+    width: 100%;
+    border: 0;
+    background: transparent;
     /* Màu chữ cho các mục dropdown */
     text-decoration: none;
     /* Không gạch chân */
@@ -220,15 +232,17 @@
     transition: background 0.3s;
     /* Hiệu ứng chuyển màu nền khi hover */
     text-align: left;
+    font-family: inherit;
+    cursor: pointer;
     /* Căn trái cho chữ */
 }
 
-.dropdown-menu-custom a:hover {
+.dropdown-menu-custom button:hover {
     background-color: #f8f8f8;
     /* Màu nền cho các mục khi hover */
 }
 
-.dropdown-menu-custom a svg {
+.dropdown-menu-custom button svg {
     margin-right: 10px;
     /* Khoảng cách giữa icon và text */
     color: #007bff;

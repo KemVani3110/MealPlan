@@ -670,6 +670,16 @@ app.post('/foodItems_ingredient', (req, res) => {
   });
 });
 
+app.delete('/foodItems_ingredient/:foodId', (req, res) => {
+  const { foodId } = req.params;
+  const query = 'DELETE FROM FoodItems_Ingredient WHERE mid = ?';
+
+  db.query(query, [foodId], (err) => {
+    if (err) return res.status(500).json({ error: 'Server error' });
+    res.json({ success: true, message: 'Food item ingredients cleared' });
+  });
+});
+
 const PORT = process.env.PORT || 3060;
 app.listen(PORT, () => { 
   console.log(`Server running on port ${PORT}`);
