@@ -1,138 +1,155 @@
-/* General Styles */
-html {
-    scroll-behavior: smooth;
-  }
-  
-body {
-    margin: 0;
-    font-family: Arial, sans-serif;
-  }
-  
-  .main-container {
-    width: 100%;
-    overflow-x: hidden;
-  }
-  
-  /* Header Section */
-  .header-section {
-    height: 100vh;
-    background: linear-gradient(to bottom, #4caf50, #8bc34a);
-    color: white;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    text-align: center;
-  }
-  
-  .home-icon {
-    position: absolute;
-    top: 20px;
-    left: 20px;
-    border: 0;
-    background: transparent;
-    cursor: pointer;
-    color: white;
-    transition: transform 0.2s ease, color 0.2s ease;
-  }
-  
-  .home-icon:hover {
-    transform: scale(1.1);
-    color: #f4f4f4;
-  }
-  .header-section h1 {
-    font-size: 3rem;
-    margin: 0;
-  }
-  
-  .header-section p {
-    font-size: 1.5rem;
-  }
-  
-  /* About Section */
-  .about-section {
-    padding: 50px;
-    background-color: #f4f4f4;
-    text-align: center;
-  }
-  
-  .about-section h2 {
-    font-size: 2.5rem;
-    margin-bottom: 20px;
-  }
-  
-  /* Team Section */
-  .team-section {
-    padding: 50px;
-    background: linear-gradient(to bottom, #2196f3, #03a9f4);
-    color: white;
-    text-align: center;
-  }
-  
-  .team-section h2 {
-    font-size: 2.5rem;
-    margin-bottom: 30px;
-  }
-  
-  .members-list {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-    align-items: center;
-  }
-  
-/* Hover Effect for Member Cards */
+.about-page {
+  min-height: 100vh;
+  background: #f5f7fb;
+  color: #10243f;
+  font-family: Arial, sans-serif;
+}
+
+.about-shell {
+  width: min(1180px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 112px 0 0;
+}
+
+.about-hero,
+.about-panel,
 .member-card-horizontal {
-  display: flex;
+  border: 1px solid #dbe4ef;
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 10px 26px rgba(16, 42, 67, 0.08);
+}
+
+.about-hero {
+  padding: 30px;
+  margin-bottom: 18px;
+}
+
+.about-eyebrow {
+  display: block;
+  color: #0f766e;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+
+.about-hero h1 {
+  max-width: 850px;
+  margin: 0;
+  color: #10243f;
+  font-size: 34px;
+  line-height: 1.2;
+}
+
+.about-hero p,
+.about-panel p,
+.member-details p {
+  color: #627d98;
+  line-height: 1.65;
+}
+
+.about-hero p {
+  max-width: 780px;
+  margin: 14px 0 0;
+  font-size: 16px;
+}
+
+.about-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+.about-panel {
+  padding: 22px;
+}
+
+.about-panel h2,
+.section-heading-about h2 {
+  margin: 0 0 12px;
+  color: #10243f;
+}
+
+.about-panel ul {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding-left: 18px;
+  color: #52606d;
+  line-height: 1.6;
+}
+
+.team-section {
+  margin-bottom: 30px;
+}
+
+.section-heading-about {
+  margin-bottom: 16px;
+}
+
+.members-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.member-card-horizontal {
+  display: grid;
+  grid-template-columns: 112px minmax(0, 1fr);
+  gap: 16px;
   align-items: center;
-  border: 1px solid #ccc;
-  border-radius: 10px;
-  padding: 15px;
-  width: 80%;
-  background-color: white;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  color: black;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  padding: 16px;
 }
 
-.member-card-horizontal:hover {
-  transform: translateY(-10px);
-  box-shadow: 0 8px 12px rgba(0, 0, 0, 0.2);
-  border-color: #4caf50;
-}
-
-/* Optionally, enhance the image on hover */
 .member-img-horizontal {
-  width: 150px;
-  height: 150px;
-  border-radius: 50%;
-  margin-right: 20px;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  width: 112px;
+  height: 112px;
+  border-radius: 8px;
+  object-fit: cover;
+  background: #e2e8f0;
 }
 
-.member-card-horizontal:hover .member-img-horizontal {
-  transform: scale(1.1);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+.member-details h3 {
+  margin: 0 0 6px;
+  color: #10243f;
+  font-size: 18px;
 }
 
-  
-  .member-details {
-    text-align: left;
+.member-details span {
+  display: inline-block;
+  border-radius: 999px;
+  background: #f0fdfa;
+  color: #0f766e;
+  font-size: 12px;
+  font-weight: 800;
+  padding: 6px 9px;
+}
+
+.member-details p {
+  margin: 8px 0 0;
+}
+
+@media (max-width: 860px) {
+  .about-grid,
+  .members-list {
+    grid-template-columns: 1fr;
   }
-  
-  .member-details h3 {
-    margin: 0;
-    margin-bottom: 10px;
-    font-size: 1.5em;
+}
+
+@media (max-width: 640px) {
+  .about-shell {
+    width: min(100% - 20px, 1180px);
+    padding-top: 138px;
   }
-  
-  .member-details p {
-    margin: 5px 0;
+
+  .about-hero h1 {
+    font-size: 28px;
   }
-  
-  /* Footer Section */
-  .footer-section {
-    color: black;
-    text-align: center;
-    padding: 20px;
+
+  .member-card-horizontal {
+    grid-template-columns: 1fr;
   }
+}

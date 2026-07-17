@@ -1,250 +1,186 @@
-/* TaskBar.css */
-
-/* Container cho TaskBar */
-.taskbar-container-custom {
+.app-header {
     position: fixed;
-    /* Cố định TaskBar */
     top: 0;
-    /* Nằm ở đầu màn hình */
     left: 0;
-    width: 100%;
-    display: flex;
-    /* Sử dụng flexbox để bố trí các phần tử */
-    align-items: center;
-    /* Căn giữa theo chiều dọc */
-    background: linear-gradient(90deg, #141E30, #243B55);
-    /* Màu gradient hiện đại */
-    padding: 12px 25px;
-    /* Khoảng cách padding */
-    justify-content: space-between;
-    /* Khoảng cách giữa các phần tử trái và phải */
-    color: #ffffff;
-    /* Màu chữ */
-    font-family: 'Roboto', sans-serif;
-    /* Font chữ hiện đại */
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
-    /* Thêm bóng cho thanh TaskBar */
     z-index: 1000;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 18px;
+    width: 100%;
     box-sizing: border-box;
-    /* Hiển thị trên các phần tử khác */
+    border-bottom: 1px solid #dbe4ef;
+    background: rgba(255, 255, 255, 0.96);
+    color: #10243f;
+    padding: 12px 28px;
+    box-shadow: 0 10px 28px rgba(16, 42, 67, 0.08);
+    backdrop-filter: blur(12px);
+    font-family: Arial, sans-serif;
 }
 
-/* Phần bên trái của TaskBar */
-.taskbar-left-custom {
-    display: flex;
-    /* Bố trí icon bên trái */
-    align-items: center;
-    /* Căn giữa các icon trong TaskBar */
-    gap: 20px;
-    /* Khoảng cách giữa các phần tử */
-}
-
-/* Icon trong TaskBar */
-.taskbar-icon-custom {
-    border: 0;
-    color: #ffffff;
-    padding: 15px;
-    /* Khoảng cách cho icon */
-    background: rgba(255, 255, 255, 0.1);
-    /* Màu nền trong suốt nhẹ */
-    border-radius: 50%;
-    /* Bo tròn icon */
-    cursor: pointer;
-    /* Hiển thị con trỏ tay khi hover */
-    display: flex;
-    /* Sử dụng flexbox để căn giữa icon */
-    align-items: center;
-    /* Căn giữa các phần tử */
-    justify-content: center;
-    /* Căn giữa các phần tử */
-    transition: background-color 0.3s, transform 0.2s;
-    /* Hiệu ứng chuyển màu nền và phóng to khi hover */
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-}
-
-.taskbar-icon-custom:hover {
-    background: rgba(255, 255, 255, 0.2);
-    /* Đổi màu nền khi hover */
-    transform: scale(1.2);
-    /* Phóng to icon khi hover */
-}
-
-/* Icon nhạc */
-.music-icon-custom {
-    border: 0;
-    color: #ffffff;
-    display: flex;
-    /* Bố trí icon nhạc bên trái */
-    align-items: center;
-    /* Căn giữa */
-    padding: 10px 18px;
-    /* Padding cho icon nhạc */
-    background: rgba(255, 255, 255, 0.1);
-    /* Màu nền cho icon nhạc */
-    border-radius: 8px;
-    /* Bo tròn góc cho icon nhạc */
-    cursor: pointer;
-    /* Hiển thị con trỏ tay khi hover */
-    transition: background 0.3s, transform 0.2s;
-    /* Hiệu ứng chuyển màu nền và phóng to khi hover */
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-}
-
-.music-icon-custom:hover {
-    background: rgba(255, 255, 255, 0.2);
-    /* Đổi màu nền khi hover */
-    transform: scale(1.1);
-    /* Phóng to icon nhạc khi hover */
-}
-
-.music-icon-custom i {
-    font-size: 20px;
-    /* Kích thước icon nhạc */
-    margin-right: 8px;
-    /* Khoảng cách giữa icon và text */
-    color: #00FFC6;
-}
-
-.music-text-custom {
-    font-size: 15px;
-    /* Kích thước chữ cho text nhạc */
-    color: #ffffff;
-    /* Màu chữ cho text nhạc */
-    font-weight: bold;
-    /* Đặt chữ in đậm để nổi bật hơn */
-}
-
-/* Phần bên phải của TaskBar */
-.taskbar-right-custom {
-    display: flex;
-    /* Bố trí các phần tử bên phải */
-    align-items: center;
-    /* Căn giữa các mục trong TaskBar */
-    gap: 20px;
-    /* Khoảng cách giữa các phần tử */
-}
-
-.taskbar-item-container-custom {
-    display: flex;
-    /* Hiển thị các chức năng bên cạnh nhau */
-    gap: 12px;
-    flex-wrap: wrap;
-    justify-content: flex-end;
-    /* Khoảng cách giữa các mục chức năng */
-}
-
-.taskbar-item-custom {
-    border: 0;
-    padding: 12px 18px;
-    /* Padding cho các mục chức năng */
-    background: rgba(255, 255, 255, 0.1);
-    /* Màu nền trong suốt nhẹ */
-    border-radius: 10px;
-    /* Bo tròn góc cho mục chức năng */
-    cursor: pointer;
-    /* Hiển thị con trỏ tay khi hover */
-    transition: background 0.3s, transform 0.2s;
-    /* Hiệu ứng chuyển màu nền và phóng to khi hover */
-    font-size: 15px;
+.app-header button {
     font-family: inherit;
-    /* Kích thước chữ */
-    color: #fff;
-    /* Màu chữ */
-    display: flex;
+}
+
+.app-brand {
+    display: inline-flex;
     align-items: center;
-    justify-content: center;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-}
-
-.taskbar-item-custom:hover {
-    background: rgba(255, 255, 255, 0.2);
-    /* Đổi màu nền khi hover */
-    transform: scale(1.1);
-    /* Phóng to mục chức năng khi hover */
-}
-
-.user-profile-custom {
-    display: flex;
-    /* Bố trí avatar và dropdown */
-    align-items: center;
-    /* Căn giữa avatar và dropdown */
-    cursor: pointer;
-    /* Hiển thị con trỏ tay khi hover */
-    position: relative;
-    /* Dùng cho dropdown */
-    gap: 8px;
-}
-
-.user-avatar-custom {
-    width: 50px;
-    /* Kích thước avatar */
-    height: 50px;
-    /* Kích thước avatar */
-    border-radius: 50%;
-    /* Bo tròn avatar */
-    border: 2px solid #00FFC6;
-    /* Viền phát sáng cho avatar */
-    box-shadow: 0 0 15px #00FFC6;
-    /* Hiệu ứng phát sáng */
-}
-
-.dropdown-menu-custom {
-    position: absolute;
-    /* Đặt vị trí dropdown tương đối */
-    top: 60px;
-    /* Khoảng cách từ trên xuống */
-    right: 0;
-    /* Căn phải */
-    background-color: #ffffff;
-    /* Màu nền cho dropdown */
-    color: #333;
-    /* Màu chữ cho dropdown */
-    border-radius: 12px;
-    /* Bo tròn các góc cho dropdown */
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
-    /* Bóng cho dropdown */
-    padding: 12px 0;
-    /* Padding cho dropdown */
-    min-width: 180px;
-    /* Đặt độ rộng tối thiểu cho dropdown */
-    z-index: 1000;
-    /* Đặt độ ưu tiên để dropdown không bị chồng lên */
-    transition: all 0.3s ease;
-    /* Hiệu ứng chuyển động mượt mà */
-}
-
-.dropdown-menu-custom button {
-    display: flex;
-    /* Hiển thị các mục chiếm toàn bộ chiều rộng */
-    align-items: center;
-    /* Căn giữa icon và text */
-    color: #333;
-    width: 100%;
+    gap: 10px;
+    min-width: 210px;
     border: 0;
     background: transparent;
-    /* Màu chữ cho các mục dropdown */
-    text-decoration: none;
-    /* Không gạch chân */
-    padding: 12px 15px;
-    /* Padding cho các mục dropdown */
-    border-radius: 8px;
-    /* Bo tròn góc cho các mục dropdown */
-    transition: background 0.3s;
-    /* Hiệu ứng chuyển màu nền khi hover */
-    text-align: left;
-    font-family: inherit;
+    color: #10243f;
     cursor: pointer;
-    /* Căn trái cho chữ */
+    padding: 0;
+    text-align: left;
 }
 
-.dropdown-menu-custom button:hover {
-    background-color: #f8f8f8;
-    /* Màu nền cho các mục khi hover */
+.brand-mark {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    border-radius: 8px;
+    background: #0f766e;
+    color: #ffffff;
 }
 
-.dropdown-menu-custom button svg {
-    margin-right: 10px;
-    /* Khoảng cách giữa icon và text */
-    color: #007bff;
-    /* Màu icon */
+.app-brand strong,
+.app-brand small {
+    display: block;
+}
+
+.app-brand strong {
+    font-size: 17px;
+}
+
+.app-brand small {
+    color: #627d98;
+    font-size: 12px;
+    margin-top: 2px;
+}
+
+.app-nav {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    min-width: 0;
+}
+
+.app-nav-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    background: transparent;
+    color: #52606d;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 700;
+    padding: 10px 11px;
+    white-space: nowrap;
+}
+
+.app-nav-item:hover,
+.app-nav-item.active {
+    border-color: #ccfbf1;
+    background: #f0fdfa;
+    color: #0f766e;
+}
+
+.app-user-menu {
+    position: relative;
+}
+
+.user-menu-trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid #dbe4ef;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #10243f;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 700;
+    padding: 10px 12px;
+}
+
+.user-menu-trigger svg:first-child {
+    color: #0f766e;
+    font-size: 20px;
+}
+
+.chevron {
+    color: #829ab1;
+    font-size: 12px;
+    transition: transform 0.2s ease;
+}
+
+.chevron.open {
+    transform: rotate(180deg);
+}
+
+.user-dropdown {
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 0;
+    width: 190px;
+    border: 1px solid #dbe4ef;
+    border-radius: 8px;
+    background: #ffffff;
+    box-shadow: 0 18px 45px rgba(16, 42, 67, 0.16);
+    padding: 8px;
+}
+
+.user-dropdown button {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    width: 100%;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: #334e68;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 700;
+    padding: 10px;
+    text-align: left;
+}
+
+.user-dropdown button:hover {
+    background: #f5f7fb;
+    color: #0f766e;
+}
+
+@media (max-width: 1120px) {
+    .app-header {
+        grid-template-columns: 1fr auto;
+        gap: 10px;
+    }
+
+    .app-nav {
+        grid-column: 1 / -1;
+        justify-content: flex-start;
+        overflow-x: auto;
+        padding-bottom: 2px;
+    }
+}
+
+@media (max-width: 640px) {
+    .app-header {
+        padding: 10px 14px;
+    }
+
+    .app-brand {
+        min-width: 0;
+    }
+
+    .app-brand small,
+    .user-menu-trigger span {
+        display: none;
+    }
 }

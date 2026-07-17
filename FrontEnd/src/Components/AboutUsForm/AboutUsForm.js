@@ -1,8 +1,7 @@
 import React from 'react';
 import './AboutUsForm.css';
-import { useNavigate } from 'react-router-dom';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faHome } from '@fortawesome/free-solid-svg-icons';
+import TaskBar from '../TaskBar/TaskBar';
+import Footer from '../Footer/Footer';
 import Khoi from '../Assets/Photo/Khoi.png';
 import Phat from '../Assets/Photo/Phat.png';
 import Loc from '../Assets/Photo/loc.png';
@@ -14,21 +13,21 @@ const members = [
     role: 'Backend, xác thực và meal plan',
     img: Khoi,
     id: 22108509,
-    description: 'Xây dựng đăng nhập, route bảo vệ, API lưu kế hoạch và nghiệp vụ meal plan.',
+    description: 'Xây dựng đăng nhập, API lưu kế hoạch, kiểm tra dữ liệu và nghiệp vụ meal plan.',
   },
   {
     name: 'Võ Thành Phát',
     role: 'Meal plan và tích hợp API',
     img: Phat,
     id: 22122848,
-    description: 'Thiết kế luồng chọn món, lưu bữa ăn và đồng bộ dữ liệu với backend.',
+    description: 'Thiết kế luồng chọn món, lưu bữa ăn và đồng bộ dữ liệu giữa frontend với backend.',
   },
   {
     name: 'Dương Xuân Lộc',
     role: 'Quản lý món ăn và nguyên liệu',
     img: Loc,
     id: 22108466,
-    description: 'Xây dựng màn quản lý món, định lượng nguyên liệu, chi phí và calo.',
+    description: 'Xây dựng màn kho món, định lượng nguyên liệu, chi phí và calo theo khẩu phần.',
   },
   {
     name: 'Nguyễn Hữu Tâm',
@@ -39,51 +38,67 @@ const members = [
   },
 ];
 
+const values = [
+  'Dữ liệu món ăn phải có định lượng để tính calo và chi phí.',
+  'Gợi ý món cần giải thích được vì sao phù hợp.',
+  'Kế hoạch tuần phải tổng hợp được nguyên liệu cần mua.',
+];
+
 const AboutUsForm = () => {
-  const navigate = useNavigate();
-
   return (
-    <div className="main-container">
-      <section className="header-section">
-        <button className="home-icon" type="button" onClick={() => navigate('/main')} title="Về trang chính">
-          <FontAwesomeIcon icon={faHome} size="2x" />
-        </button>
-        <h1>Meal Plan App</h1>
-        <p>Ứng dụng hỗ trợ chọn món, tính calo, tính chi phí và lập kế hoạch ăn uống theo tuần.</p>
-      </section>
+    <div className="about-page">
+      <TaskBar />
 
-      <section className="about-section">
-        <h2>Mục tiêu sản phẩm</h2>
-        <p>
-          Dự án tập trung vào một luồng thực tế: quản lý món ăn và nguyên liệu, chọn món cho từng bữa,
-          kiểm tra khẩu phần, sau đó lưu thành kế hoạch tuần để người dùng dễ theo dõi.
-        </p>
-      </section>
+      <main className="about-shell">
+        <section className="about-hero">
+          <span className="about-eyebrow">Về dự án</span>
+          <h1>Meal Planner giúp nối kho món, gợi ý bữa và lịch ăn tuần thành một quy trình</h1>
+          <p>
+            Dự án tập trung vào bài toán thực tế: biết món gồm nguyên liệu gì, một bữa nên ăn gì,
+            chi phí bao nhiêu và tuần này cần chuẩn bị những nguyên liệu nào.
+          </p>
+        </section>
 
-      <section className="team-section">
-        <h2>Nhóm phát triển</h2>
-        <div className="members-list">
-          {members.map((member) => (
-            <div key={member.id} className="member-card-horizontal">
-              <img
-                src={member.img}
-                alt={member.name}
-                className="member-img-horizontal"
-              />
-              <div className="member-details">
-                <h3>{member.name}</h3>
-                <p><strong>Vai trò:</strong> {member.role}</p>
-                <p><strong>MSSV:</strong> {member.id}</p>
-                <p><strong>Mô tả:</strong> {member.description}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
+        <section className="about-grid">
+          <div className="about-panel">
+            <h2>Mục tiêu sản phẩm</h2>
+            <p>
+              Người dùng có thể quản lý món ăn, tạo combo bữa ăn theo ngân sách và chuyển combo đó vào kế hoạch tuần.
+              Các trang không hoạt động rời rạc mà chia sẻ dữ liệu theo một luồng thống nhất.
+            </p>
+          </div>
+          <div className="about-panel">
+            <h2>Nguyên tắc thiết kế</h2>
+            <ul>
+              {values.map((value) => (
+                <li key={value}>{value}</li>
+              ))}
+            </ul>
+          </div>
+        </section>
 
-      <section className="footer-section">
-        <p>© 2026 Meal Plan App.</p>
-      </section>
+        <section className="team-section">
+          <div className="section-heading-about">
+            <span className="about-eyebrow">Nhóm phát triển</span>
+            <h2>Thành viên và vai trò</h2>
+          </div>
+          <div className="members-list">
+            {members.map((member) => (
+              <article key={member.id} className="member-card-horizontal">
+                <img src={member.img} alt={member.name} className="member-img-horizontal" />
+                <div className="member-details">
+                  <h3>{member.name}</h3>
+                  <span>{member.role}</span>
+                  <p>MSSV: {member.id}</p>
+                  <p>{member.description}</p>
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
+      </main>
+
+      <Footer />
     </div>
   );
 };

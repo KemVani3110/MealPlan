@@ -105,6 +105,77 @@
     box-shadow: 0 10px 24px rgba(16, 42, 67, 0.08);
 }
 
+.workflow-import-panel {
+    display: grid;
+    grid-template-columns: minmax(260px, 1fr) minmax(220px, 0.8fr) minmax(260px, 0.9fr) auto;
+    gap: 14px;
+    align-items: center;
+    max-width: 1440px;
+    margin: 0 auto 14px;
+    padding: 16px;
+    border: 1px solid #fed7aa;
+    border-radius: 8px;
+    background: #fff7ed;
+    box-shadow: 0 10px 24px rgba(16, 42, 67, 0.08);
+}
+
+.workflow-import-panel h2 {
+    margin: 0;
+    color: #102a43;
+    font-size: 1.25rem;
+}
+
+.workflow-import-panel p {
+    margin: 8px 0 0;
+    color: #52606d;
+}
+
+.workflow-meal-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.workflow-meal-list span {
+    border-radius: 999px;
+    background: #ffffff;
+    color: #c2410c;
+    font-size: 0.82rem;
+    font-weight: 800;
+    padding: 8px 10px;
+}
+
+.workflow-controls {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.workflow-controls label {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    color: #52606d;
+    font-size: 0.82rem;
+    font-weight: 700;
+}
+
+.workflow-controls select {
+    min-height: 42px;
+    border: 1px solid #fed7aa;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #102a43;
+    font: inherit;
+    padding: 0 12px;
+}
+
+.workflow-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
 .plan-name-field {
     min-width: 0;
 }
@@ -667,6 +738,15 @@
         grid-template-columns: repeat(3, minmax(150px, 1fr));
     }
 
+    .workflow-import-panel {
+        grid-template-columns: 1fr;
+    }
+
+    .workflow-actions {
+        flex-direction: row;
+        flex-wrap: wrap;
+    }
+
     .planner-summary {
         grid-template-columns: 1fr;
     }
@@ -692,6 +772,10 @@
     }
 
     .planner-controls {
+        grid-template-columns: 1fr;
+    }
+
+    .workflow-controls {
         grid-template-columns: 1fr;
     }
 

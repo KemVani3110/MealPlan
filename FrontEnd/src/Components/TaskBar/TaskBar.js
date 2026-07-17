@@ -1,45 +1,46 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import {
+  FaBookOpen,
+  FaCalendarAlt,
+  FaChevronDown,
+  FaHome,
+  FaInfoCircle,
+  FaLightbulb,
+  FaSignOutAlt,
+  FaUserCircle,
+  FaUsers,
+  FaUtensils,
+} from 'react-icons/fa';
 import './TaskBar.css';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCog, faSignOutAlt } from '@fortawesome/free-solid-svg-icons';
-import chillMusic from '../Assets/Music/rick.MP3';
+
+const navItems = [
+  { label: 'Tổng quan', path: '/main', icon: FaHome },
+  { label: 'Lập kế hoạch', path: '/planmeal', icon: FaCalendarAlt },
+  { label: 'Kho món', path: '/ingredient', icon: FaBookOpen },
+  { label: 'Gợi ý món', path: '/makemeal', icon: FaLightbulb },
+  { label: 'Cộng đồng', path: '/community', icon: FaUsers },
+  { label: 'Giới thiệu', path: '/aboutus', icon: FaInfoCircle },
+];
+
+const getUsername = () => {
+  const token = localStorage.getItem('token');
+  if (!token) return 'Tài khoản';
+
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    return payload.username || 'Tài khoản';
+  } catch {
+    return 'Tài khoản';
+  }
+};
 
 const TaskBar = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const audioRef = useRef(new Audio(chillMusic));
-  const [currentTime, setCurrentTime] = useState(0);
   const dropdownRef = useRef(null);
   const navigate = useNavigate();
-
-  const toggleDropdown = () => {
-    setDropdownOpen((open) => !open);
-  };
-
-  const toggleMusic = () => {
-    if (isPlaying) {
-      audioRef.current.pause();
-      setIsPlaying(false);
-    } else {
-      audioRef.current.currentTime = currentTime;
-      audioRef.current.play();
-      setIsPlaying(true);
-    }
-  };
-
-  useEffect(() => {
-    const audio = audioRef.current;
-    const updateTime = () => {
-      setCurrentTime(audio.currentTime);
-    };
-
-    audio.addEventListener('timeupdate', updateTime);
-
-    return () => {
-      audio.removeEventListener('timeupdate', updateTime);
-    };
-  }, []);
+  const location = useLocation();
+  const username = useMemo(getUsername, []);
 
   const handleClickOutside = useCallback((event) => {
     if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -49,84 +50,62 @@ const TaskBar = () => {
 
   useEffect(() => {
     document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [handleClickOutside]);
+
+  const handleNavigate = (path) => {
+    setDropdownOpen(false);
+    navigate(path);
+  };
 
   const handleLogout = () => {
     localStorage.removeItem('token');
     navigate('/');
   };
 
-  const handleHome = () => {
-    navigate('/main');
-  };
-
-  const handleMealPlan = () => {
-    navigate('/planmeal');
-  };
-
-  const handleMakeMeal = () => {
-    navigate('/makemeal');
-  };
-
-  const handleIngredient = () => {
-    navigate('/ingredient');
-  };
-  const handleInfoUser = () => {
-    navigate('/infouser');
-  };
-  const handleCommunity = () => {
-    navigate('/community');
-  };
-  const handleAbout = () => {
-    navigate('/aboutus');
-  };
-
   return (
-    <div className='taskbar-container-custom'>
-      <div className='taskbar-left-custom'>
-        <button className='taskbar-icon-custom' type="button" onClick={handleHome} aria-label="Trang chủ">
-          <i className="fa fa-home"></i>
-        </button>
-        <button className='music-icon-custom' type="button" onClick={toggleMusic}>
-          <i className="fa fa-music"></i>
-          <span className='music-text-custom'>{isPlaying ? 'Dừng nhạc' : 'Phát nhạc'}</span>
-        </button>
-      </div>
-      <div className='taskbar-right-custom'>
-        <div className='taskbar-item-container-custom'>
-          <button className='taskbar-item-custom' type="button" onClick={handleMealPlan}>Lập kế hoạch</button>
-          <button className='taskbar-item-custom' type="button" onClick={handleIngredient}>Món & nguyên liệu</button>
-          <button className='taskbar-item-custom' type="button" onClick={handleMakeMeal}>Gợi ý món</button>
-          <button className='taskbar-item-custom' type="button" onClick={handleCommunity}>Cộng đồng</button>
-          <button className='taskbar-item-custom' type="button" onClick={handleAbout}>Giới thiệu</button>
-        </div>
-        <div className='user-profile-custom' onClick={toggleDropdown} ref={dropdownRef}>
-          <img
-            src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ-VLNNe21fRCrEEMk1TF0i8BzrjxqDR5s6zL89sa28-ouSiB8aBVH2VuPqG_4sNNf_NUQ&usqp=CAU"
-            alt='User Avatar'
-            className='user-avatar-custom'
-            style={{ objectFit: 'cover' }}
-          />
+    <header className="app-header">
+      <button className="app-brand" type="button" onClick={() => handleNavigate('/main')}>
+        <span className="brand-mark"><FaUtensils /></span>
+        <span>
+          <strong>Meal Planner</strong>
+          <small>Food, budget, weekly plan</small>
+        </span>
+      </button>
 
-          <div className='dropdown-icon'>
-            <i className="fa fa-caret-down"></i>
+      <nav className="app-nav" aria-label="Điều hướng chính">
+        {navItems.map(({ label, path, icon: Icon }) => (
+          <button
+            key={path}
+            className={`app-nav-item ${location.pathname === path ? 'active' : ''}`}
+            type="button"
+            onClick={() => handleNavigate(path)}
+          >
+            <Icon />
+            <span>{label}</span>
+          </button>
+        ))}
+      </nav>
+
+      <div className="app-user-menu" ref={dropdownRef}>
+        <button className="user-menu-trigger" type="button" onClick={() => setDropdownOpen((open) => !open)}>
+          <FaUserCircle />
+          <span>{username}</span>
+          <FaChevronDown className={dropdownOpen ? 'chevron open' : 'chevron'} />
+        </button>
+
+        {dropdownOpen && (
+          <div className="user-dropdown">
+            <button type="button" onClick={() => handleNavigate('/infouser')}>
+              <FaUserCircle /> Hồ sơ
+            </button>
+            <button type="button" onClick={handleLogout}>
+              <FaSignOutAlt /> Đăng xuất
+            </button>
           </div>
-          {dropdownOpen && (
-            <div className='dropdown-menu-custom'>
-              <button type="button" onClick={handleInfoUser}>
-                <FontAwesomeIcon icon={faCog} /> Cài đặt
-              </button>
-              <button type="button" onClick={handleLogout}>
-                <FontAwesomeIcon icon={faSignOutAlt} /> Đăng xuất
-              </button>
-            </div>
-          )}
-        </div>
+        )}
       </div>
-    </div>
+    </header>
   );
 };
 

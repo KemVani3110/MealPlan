@@ -1,8 +1,10 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 import './PlanMeal.css';
 import TaskBar from '../TaskBar/TaskBar';
 import Snowfall from '../Snowfall/SnowFall';
+import { clearMealWorkflowDraft, readMealWorkflowDraft } from '../../utils/mealWorkflow';
 
 const API_URL = 'http://localhost:3060';
 const mealTimes = ['Bữa sáng', 'Bữa trưa', 'Bữa chiều'];
@@ -101,6 +103,7 @@ const getMealsTotalCalories = (meals) =>
   meals.reduce((total, meal) => total + toNumber(meal?.foodCalories) * toNumber(meal?.quantity, 1), 0);
 
 const PlanMeal = () => {
+  const navigate = useNavigate();
   const [meals, setMeals] = useState([]);
   const [mealPlans, setMealPlans] = useState([]);
   const [currentPlanId, setCurrentPlanId] = useState(null);
@@ -117,6 +120,9 @@ const PlanMeal = () => {
   const [mealSearchTerm, setMealSearchTerm] = useState('');
   const [modalWarning, setModalWarning] = useState('');
   const [saveStatus, setSaveStatus] = useState('');
+  const [workflowDraft, setWorkflowDraft] = useState(null);
+  const [workflowDay, setWorkflowDay] = useState(daysOfWeek[0]);
+  const [workflowMealTime, setWorkflowMealTime] = useState(mealTimes[0]);
 
   const adultCount = Math.max(peopleCount, 0);
   const dailyTargetCalories = adultCount * adultDailyCalories + childrenCount * childDailyCalories;
@@ -152,6 +158,13 @@ const PlanMeal = () => {
     if (!keyword) return meals;
     return meals.filter((meal) => meal.foodName.toLowerCase().includes(keyword));
   }, [mealSearchTerm, meals]);
+
+  const workflowMeals = useMemo(() => {
+    if (!workflowDraft?.meals?.length) return [];
+    return workflowDraft.meals
+      .map((meal) => normalizeMeal(meal, meals))
+      .filter(Boolean);
+  }, [meals, workflowDraft]);
 
   const applyMealPlan = useCallback((plan, foodCatalog = []) => {
     if (!plan) return;
@@ -210,6 +223,19 @@ const PlanMeal = () => {
   useEffect(() => {
     fetchInitialData();
   }, [fetchInitialData]);
+
+  useEffect(() => {
+    if (meals.length === 0) return;
+
+    const draft = readMealWorkflowDraft();
+    if (!draft?.meals?.length) return;
+
+    setWorkflowDraft(draft);
+    setPeopleCount(Math.max(1, toNumber(draft.peopleCount, 1)));
+    setChildrenCount(Math.max(0, toNumber(draft.childrenCount)));
+    setHasChildren(toNumber(draft.childrenCount) > 0);
+    setSaveStatus('Có bữa ăn từ trang khác đang chờ thêm vào lịch.');
+  }, [meals.length]);
 
   useEffect(() => {
     const mealPlanData = {
@@ -343,6 +369,33 @@ const PlanMeal = () => {
     }));
   };
 
+  const applyWorkflowDraftToSlot = () => {
+    if (workflowMeals.length === 0) return;
+
+    const slotKey = getSlotKey(workflowMealTime, workflowDay);
+    setMealSlots((currentSlots) => ({
+      ...currentSlots,
+      [slotKey]: [
+        ...(currentSlots[slotKey] || []),
+        ...workflowMeals.map((meal) => normalizeMeal(meal, meals)),
+      ],
+    }));
+
+    if (planName.trim() === 'Kế hoạch mới') {
+      setPlanName(`Kế hoạch từ ${workflowDraft?.source === 'make-meal' ? 'gợi ý món' : 'kho món'}`);
+    }
+
+    clearMealWorkflowDraft();
+    setWorkflowDraft(null);
+    setSaveStatus('Đã thêm bữa từ trang liên kết vào lịch.');
+  };
+
+  const dismissWorkflowDraft = () => {
+    clearMealWorkflowDraft();
+    setWorkflowDraft(null);
+    setSaveStatus('Đã bỏ bữa đang chờ thêm vào lịch.');
+  };
+
   const saveMealPlanToDB = async () => {
     const validMeals = Object.entries(mealSlots).flatMap(([slotKey, slotMeals]) => {
       const [mealTime, dayOfWeek] = slotKey.split('__');
@@ -473,9 +526,51 @@ const PlanMeal = () => {
           <p className="hero-copy">Lên món theo từng bữa, kiểm soát calo, chi phí và nguyên liệu cần mua cho cả tuần.</p>
         </div>
         <div className="hero-actions">
+          <button type="button" className="secondary-action" onClick={() => navigate('/makemeal')}>Gợi ý món</button>
+          <button type="button" className="secondary-action" onClick={() => navigate('/ingredient')}>Kho món</button>
           <button type="button" className="primary-action" onClick={saveMealPlanToDB}>Lưu kế hoạch</button>
         </div>
       </section>
+
+      {workflowDraft && (
+        <section className="workflow-import-panel" aria-label="Bữa đang chờ thêm vào kế hoạch">
+          <div>
+            <p className="eyebrow">Liên kết từ {workflowDraft.source === 'make-meal' ? 'Gợi ý món' : 'Món và nguyên liệu'}</p>
+            <h2>Bữa đang chờ thêm vào lịch</h2>
+            <p>{workflowDraft.note || 'Chọn ngày và bữa để đưa danh sách món này vào kế hoạch.'}</p>
+          </div>
+
+          <div className="workflow-meal-list">
+            {workflowMeals.map((meal) => (
+              <span key={`${meal.foodId}-${meal.quantity}`}>{meal.foodName} x{meal.quantity}</span>
+            ))}
+          </div>
+
+          <div className="workflow-controls">
+            <label>
+              <span>Ngày</span>
+              <select value={workflowDay} onChange={(event) => setWorkflowDay(event.target.value)}>
+                {daysOfWeek.map((day) => (
+                  <option key={day} value={day}>{day}</option>
+                ))}
+              </select>
+            </label>
+            <label>
+              <span>Bữa</span>
+              <select value={workflowMealTime} onChange={(event) => setWorkflowMealTime(event.target.value)}>
+                {mealTimes.map((mealTime) => (
+                  <option key={mealTime} value={mealTime}>{mealTime}</option>
+                ))}
+              </select>
+            </label>
+          </div>
+
+          <div className="workflow-actions">
+            <button type="button" className="primary-action" onClick={applyWorkflowDraftToSlot}>Thêm vào lịch</button>
+            <button type="button" className="secondary-action" onClick={dismissWorkflowDraft}>Bỏ qua</button>
+          </div>
+        </section>
+      )}
 
       <section className="planner-controls" aria-label="Thông tin kế hoạch">
         <label className="plan-name-field">

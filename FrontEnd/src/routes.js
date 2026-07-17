@@ -1,7 +1,5 @@
 import React from "react";
 import ProtectedRoute from "./Auth/ProtectedRoute";
-import NotFound from "./Components/NotFoundForm/NotFoundForm";
-import InfoUser from "./Components/InfoUser/InfoUser";
 
 
 const LoginForm = React.lazy(() => import("./Components/LoginForm/LoginForm"));
@@ -11,6 +9,8 @@ const IngredientForm = React.lazy(() => import("./Components/IngredientForm/Ingr
 const AboutUsForm = React.lazy(() => import("./Components/AboutUsForm/AboutUsForm"));
 const MakeMeal = React.lazy(() => import("./Components/MakeMeal/MakeMeal"));
 const CommunityPage = React.lazy(() => import("./Components/Community/CommunityPage"));
+const InfoUser = React.lazy(() => import("./Components/InfoUser/InfoUser"));
+const NotFound = React.lazy(() => import("./Components/NotFoundForm/NotFoundForm"));
 
 const routes = [
   { path: "/", element: <LoginForm /> },
