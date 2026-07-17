@@ -3,7 +3,6 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import './PlanMeal.css';
 import TaskBar from '../TaskBar/TaskBar';
-import Snowfall from '../Snowfall/SnowFall';
 import { clearMealWorkflowDraft, readMealWorkflowDraft } from '../../utils/mealWorkflow';
 
 const API_URL = 'http://localhost:3060';
@@ -517,7 +516,6 @@ const PlanMeal = () => {
   return (
     <div className="meal-page">
       <TaskBar />
-      <Snowfall />
 
       <section className="meal-hero">
         <div>
@@ -654,6 +652,7 @@ const PlanMeal = () => {
               </div>
               {daysOfWeek.map((dayOfWeek) => (
                 <div className="meal-slot" key={dayOfWeek}>
+                  <span className="mobile-slot-day">{dayOfWeek}</span>
                   {renderSlot(mealTime, dayOfWeek)}
                 </div>
               ))}

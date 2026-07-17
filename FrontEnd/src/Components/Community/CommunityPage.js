@@ -2,7 +2,6 @@ import React, { useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
 import './CommunityPage.css';
 import TaskBar from '../TaskBar/TaskBar';
-import Snowfall from '../Snowfall/SnowFall';
 import { formatCalories, formatCurrency } from '../../utils/format';
 
 const API_URL = 'http://localhost:3060';
@@ -84,7 +83,6 @@ const CommunityPage = () => {
   return (
     <div className="community-page-container">
       <TaskBar />
-      <Snowfall />
 
       <aside className="community-page-sidebar">
         <h2>Cộng đồng món ăn</h2>

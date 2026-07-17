@@ -369,6 +369,10 @@
     background: #ffffff;
 }
 
+.mobile-slot-day {
+    display: none;
+}
+
 .empty-slot-button {
     display: flex;
     width: 100%;
@@ -780,12 +784,42 @@
     }
 
     .week-board {
-        overflow-x: auto;
+        overflow-x: visible;
     }
 
     .week-grid {
-        grid-template-columns: 104px repeat(7, minmax(132px, 1fr));
-        min-width: 1028px;
+        grid-template-columns: 1fr;
+        min-width: 0;
+    }
+
+    .week-header {
+        display: none;
+    }
+
+    .meal-row {
+        border-bottom: 1px solid #d9e2ec;
+        padding: 12px;
+    }
+
+    .meal-row-label {
+        border: 0;
+        border-radius: 8px;
+        margin-bottom: 10px;
+    }
+
+    .meal-slot {
+        border: 1px solid #e4ebf3;
+        border-radius: 8px;
+        margin-bottom: 10px;
+        padding: 10px;
+    }
+
+    .mobile-slot-day {
+        display: block;
+        color: #0f766e;
+        font-size: 0.82rem;
+        font-weight: 800;
+        margin-bottom: 8px;
     }
 
     .summary-grid {

@@ -164,8 +164,8 @@
 
     .app-nav {
         grid-column: 1 / -1;
+        flex-wrap: wrap;
         justify-content: flex-start;
-        overflow-x: auto;
         padding-bottom: 2px;
     }
 }

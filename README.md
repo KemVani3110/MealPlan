@@ -1,47 +1,64 @@
-# Meal Plan App
+# Meal Planner
 
-Ứng dụng hỗ trợ quản lý món ăn, nguyên liệu, gợi ý bữa ăn và lập kế hoạch ăn uống theo ngày. Project gồm backend Express/MySQL và frontend React.
+Ứng dụng hỗ trợ quản lý món ăn, nguyên liệu, gợi ý bữa ăn và lập kế hoạch ăn uống theo tuần. Project gồm frontend React và backend Express/MySQL.
 
-## Chức năng chính
+## Luồng chính
 
-- Đăng ký, đăng nhập bằng tài khoản nội bộ và JWT.
-- Trang chính hiển thị thống kê món ăn từ dữ liệu thật trong database.
-- Lập kế hoạch bữa ăn theo ngày, bữa và số lượng khẩu phần.
-- Quản lý món ăn và nguyên liệu, tính lại calo/chi phí theo nguyên liệu đã chọn.
-- Gợi ý món ăn theo số người lớn, trẻ em, ngân sách và mục tiêu calo.
-- Cộng đồng cho phép xem món nổi bật, đánh giá và phản hồi nội bộ.
-- Trang tài khoản, giới thiệu nhóm và trang lỗi 404.
+1. **Kho món và nguyên liệu**: quản lý món ăn, ảnh, mô tả, định lượng nguyên liệu, calo và chi phí mỗi khẩu phần.
+2. **Gợi ý món**: tạo combo bữa ăn theo số người lớn, trẻ em, ngân sách và mục tiêu calo.
+3. **Lập kế hoạch tuần**: đưa món hoặc combo gợi ý vào từng ngày, từng bữa; lưu kế hoạch và tổng hợp chi phí/calo.
+
+Các trang `Ingredient`, `Make Meal` và `Plan Meal` đã được liên kết bằng draft tạm trong `localStorage` để người dùng có thể chuyển dữ liệu giữa các bước.
+
+## Chức năng
+
+- Đăng ký, đăng nhập bằng JWT.
+- Trang tổng quan hiển thị thống kê từ dữ liệu thật trong database.
+- Quản lý món ăn và nguyên liệu liên kết.
+- Gợi ý bữa ăn theo nhu cầu thực tế.
+- Lập, sửa, xoá meal plan theo tuần.
+- Trang cộng đồng để xem món, xếp hạng nội bộ và đánh giá tạm trên frontend.
+- Trang hồ sơ người dùng, giới thiệu dự án, 404 và layout header/footer thống nhất.
 
 ## Công nghệ
 
-- Frontend: React 18, React Router, Axios, React Icons, FontAwesome.
+- Frontend: React 18, React Router, Axios, React Icons.
 - Backend: Node.js, Express, MySQL2, bcrypt, jsonwebtoken, dotenv.
-- Database: MySQL, có file mẫu `BackEnd/dacna_sql.sql`.
+- Database: MySQL, có schema và dữ liệu mẫu trong `BackEnd/dacna_sql.sql`.
 
-## Cấu trúc thư mục
+## Cấu trúc
 
 ```text
 BackEnd/
-  server.js          API Express
-  dacna_sql.sql      Database schema/data mẫu
-  .env               Cấu hình database và JWT
+  server.js              API Express
+  dacna_sql.sql          Schema và dữ liệu mẫu
+  .env.example           Mẫu cấu hình môi trường
 
 FrontEnd/
-  src/Components/    Các trang và component giao diện
-  src/utils/format.js Helper format tiền, calo, gram
+  src/Components/        Các trang và component giao diện
+  src/Auth/              Kiểm tra token và protected route
+  src/utils/format.js    Format số tiền, calo, gram
+  src/utils/mealWorkflow.js
+                         Draft liên kết Ingredient -> Make Meal -> Plan Meal
 ```
 
 ## Cài đặt
 
-1. Import database từ `BackEnd/dacna_sql.sql` vào MySQL.
+1. Import database:
+
+```sql
+SOURCE BackEnd/dacna_sql.sql;
+```
+
 2. Tạo file `BackEnd/.env` theo mẫu:
 
 ```env
 DB_HOST=localhost
 DB_USER=root
 DB_PASSWORD=your_password
-DB_NAME=your_database_name
+DB_NAME=dacna
 JWT_SECRET=your_jwt_secret
+PORT=3060
 ```
 
 3. Cài dependencies:
@@ -54,42 +71,49 @@ cd ..\FrontEnd
 npm install
 ```
 
-## Chạy project
+## Chạy local
 
-Chạy backend:
+Backend:
 
 ```powershell
 cd BackEnd
-node server.js
+npm start
 ```
 
-Backend mặc định chạy tại `http://localhost:3060`.
-
-Chạy frontend:
+Frontend:
 
 ```powershell
 cd FrontEnd
 npm start
 ```
 
-Frontend mặc định chạy tại `http://localhost:3000`.
+Mặc định frontend chạy ở `http://localhost:3000`, backend chạy ở `http://localhost:3060`.
 
-## Kiểm tra build
-
-```powershell
-cd FrontEnd
-npm run build
-```
-
-Kiểm tra nhanh backend:
+## Kiểm tra
 
 ```powershell
 cd BackEnd
-node --check server.js
+npm run check
+
+cd ..\FrontEnd
+npm run build
 ```
 
-## Ghi chú vận hành
+## API chính
 
-- Frontend đang gọi API trực tiếp về `http://localhost:3060`.
-- Khi sửa món ăn ở trang nguyên liệu, app sẽ cập nhật lại thông tin món và thay mới danh sách nguyên liệu liên kết.
-- Chi phí và calo được format tập trung trong `FrontEnd/src/utils/format.js` để tránh số thập phân dài trên giao diện.
+- `POST /register`: tạo tài khoản.
+- `POST /login`: đăng nhập và nhận JWT.
+- `POST /renew-token`: gia hạn JWT.
+- `GET /food-items`: lấy danh sách món kèm nguyên liệu.
+- `GET /food-items/:id`: lấy chi tiết một món.
+- `GET /dishes`, `POST /dishes`, `PUT /dishes/:id`, `DELETE /dishes/:id`: CRUD món ăn.
+- `GET /ingredients`: lấy danh sách nguyên liệu.
+- `POST /foodItems_ingredient`, `DELETE /foodItems_ingredient/:foodId`: cập nhật nguyên liệu của món.
+- `GET /meal-plan`, `POST /save-meal-plan`, `DELETE /delete-meal-plan/:id`: quản lý meal plan.
+
+## Lưu ý vận hành
+
+- Frontend hiện gọi API trực tiếp về `http://localhost:3060`.
+- Không commit `node_modules`, `build` hoặc `.env`.
+- Backend đã validate các payload chính và không cho xoá món đang được dùng trong meal plan.
+- Các route legacy của meal plan đã được loại bỏ để tránh dùng nhầm luồng thiếu validation.

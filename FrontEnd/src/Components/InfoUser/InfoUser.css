@@ -175,11 +175,11 @@
 
     .profile-tabs {
         display: flex;
-        overflow-x: auto;
+        flex-wrap: wrap;
     }
 
     .profile-tabs button {
-        white-space: nowrap;
+        flex: 1 1 150px;
     }
 }
 

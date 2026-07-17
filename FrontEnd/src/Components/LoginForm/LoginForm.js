@@ -102,6 +102,9 @@ const LoginForm = () => {
             <button className="btn" type="submit">
               Sign Up
             </button>
+            <button className="mobile-auth-switch" type="button" onClick={handleLoginClick}>
+              Đã có tài khoản? Sign In
+            </button>
             <div className="mess">
               {registerSuccess && <p className="success">{registerSuccess}</p>}
               {error && <p className="error">{error}</p>}
@@ -130,6 +133,9 @@ const LoginForm = () => {
             />
             <button className="btn" type="submit">
               Login
+            </button>
+            <button className="mobile-auth-switch" type="button" onClick={handleRegisterClick}>
+              Chưa có tài khoản? Sign Up
             </button>
             <div className="mess">{error && <p className="error">{error}</p>}</div>
           </form>

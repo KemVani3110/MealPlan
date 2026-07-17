@@ -39,7 +39,12 @@ db.connect(err => {
 
 // Login API
 app.post('/login', (req, res) => {
-  const { username, password } = req.body;
+  const validation = validateLoginPayload(req.body);
+  if (validation.error) {
+    return res.status(400).json({ error: validation.error });
+  }
+
+  const { username, password } = validation.value;
   const query = 'SELECT * FROM user WHERE username = ?';
   db.query(query, [username], (err, results) => {
     if (err) return res.status(500).json({ error: 'Server error' });
@@ -58,18 +63,28 @@ app.post('/login', (req, res) => {
 
 // Register API
 app.post('/register', (req, res) => {
-  const { userID, username, password } = req.body;
+  const validation = validateRegisterPayload(req.body);
+  if (validation.error) {
+    return res.status(400).json({ error: validation.error });
+  }
+
+  const { userID, username, password } = validation.value;
   const queryCheck = 'SELECT * FROM user WHERE userID = ? OR username = ?';
   db.query(queryCheck, [userID, username], async (err, results) => {
     if (err) return res.status(500).json({ error: 'Server error' });
     if (results.length > 0) return res.status(409).json({ error: 'UserID or username already exists' });
 
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const queryInsert = 'INSERT INTO user (userID, username, password) VALUES (?, ?, ?)';
-    db.query(queryInsert, [userID, username, hashedPassword], (err) => {
-      if (err) return res.status(500).json({ error: 'Server error' });
-      res.json({ success: true, message: 'Registration successful' });
-    });
+    try {
+      const hashedPassword = await bcrypt.hash(password, 10);
+      const queryInsert = 'INSERT INTO user (userID, username, password) VALUES (?, ?, ?)';
+      db.query(queryInsert, [userID, username, hashedPassword], (err) => {
+        if (err) return res.status(500).json({ error: 'Server error' });
+        res.json({ success: true, message: 'Registration successful' });
+      });
+    } catch (hashErr) {
+      console.error('Error hashing password:', hashErr);
+      res.status(500).json({ error: 'Server error' });
+    }
   });
 });
 
@@ -99,8 +114,8 @@ app.get('/food-items', (req, res) => {
            i.id AS ingredientId, i.name AS ingredientName, i.calories AS ingredientCalories, i.price AS ingredientPrice, 
            fi_ing.gram, fi_ing.totalCalo 
     FROM FoodItems AS fi
-    JOIN FoodItems_Ingredient AS fi_ing ON fi.Fid = fi_ing.mid
-    JOIN ingredients AS i ON fi_ing.Iid = i.id`;
+    LEFT JOIN FoodItems_Ingredient AS fi_ing ON fi.Fid = fi_ing.mid
+    LEFT JOIN ingredients AS i ON fi_ing.Iid = i.id`;
 
   db.query(query, (err, results) => {
     if (err) return res.status(500).json({ error: 'Server error' });
@@ -120,14 +135,16 @@ app.get('/food-items', (req, res) => {
           ingredients: []
         };
       }
-      foodItemsMap[Fid].ingredients.push({
-        ingredientId,
-        ingredientName,
-        ingredientCalories,
-        ingredientPrice,
-        gram,
-        totalCalo
-      });
+      if (ingredientId) {
+        foodItemsMap[Fid].ingredients.push({
+          ingredientId,
+          ingredientName,
+          ingredientCalories,
+          ingredientPrice,
+          gram,
+          totalCalo
+        });
+      }
     });
 
     const foodItems = Object.values(foodItemsMap);
@@ -146,6 +163,76 @@ const isValidDate = (value) => {
 const toPositiveInt = (value) => {
   const parsed = Number(value);
   return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
+};
+
+const toNonNegativeNumber = (value) => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : null;
+};
+
+const normalizeText = (value, maxLength = 255) => String(value || '').trim().slice(0, maxLength);
+
+const validateRegisterPayload = (body) => {
+  const rawUserID = normalizeText(body.userID, 255);
+  const userID = rawUserID.slice(0, 10);
+  const username = normalizeText(body.username, 50);
+  const password = String(body.password || '');
+
+  if (!rawUserID || rawUserID.length > 10 || /\s/.test(rawUserID)) {
+    return { error: 'User ID must be 1-10 characters and cannot contain spaces' };
+  }
+
+  if (username.length < 3) {
+    return { error: 'Username must be at least 3 characters' };
+  }
+
+  if (password.length < 6) {
+    return { error: 'Password must be at least 6 characters' };
+  }
+
+  return { value: { userID, username, password } };
+};
+
+const validateLoginPayload = (body) => {
+  const username = normalizeText(body.username, 50);
+  const password = String(body.password || '');
+
+  if (!username || !password) {
+    return { error: 'Username and password are required' };
+  }
+
+  return { value: { username, password } };
+};
+
+const validateDishPayload = (body) => {
+  const name = normalizeText(body.name, 255);
+  const image = normalizeText(body.image, 255);
+  const description = normalizeText(body.description, 255);
+  const price = toNonNegativeNumber(body.price);
+  const calories = toNonNegativeNumber(body.calories);
+
+  if (!name) {
+    return { error: 'Dish name is required' };
+  }
+
+  if (price === null || calories === null) {
+    return { error: 'Dish price and calories must be valid non-negative numbers' };
+  }
+
+  return { value: { name, image, description, price, calories } };
+};
+
+const validateFoodIngredientPayload = (body) => {
+  const mid = toPositiveInt(body.mid);
+  const Iid = toPositiveInt(body.Iid);
+  const gram = toPositiveInt(body.gram);
+  const totalCalo = toNonNegativeNumber(body.totalCalo);
+
+  if (!mid || !Iid || !gram || totalCalo === null) {
+    return { error: 'Food item, ingredient, gram and calories are required' };
+  }
+
+  return { value: { mid, Iid, gram, totalCalo } };
 };
 
 const validateMealPlanPayload = (body) => {
@@ -322,114 +409,6 @@ app.post('/save-meal-plan', (req, res) => {
   });
 });
 
-app.post('/save-meal-plan-legacy', (req, res) => {
-  const { mealPlanId, dateRangeStart, dateRangeEnd, peopleCount, childrenCount, totalCost, meals } = req.body;
-
-  if (mealPlanId) {
-    // Update existing MealPlan
-    const updateMealPlanQuery = `
-      UPDATE MealPlan
-      SET date_range_start = ?, date_range_end = ?, people_count = ?, children_count = ?, total_cost = ?
-      WHERE id = ?
-    `;
-    db.query(updateMealPlanQuery, [dateRangeStart, dateRangeEnd, peopleCount, childrenCount, totalCost, mealPlanId], (err) => {
-      if (err) {
-        console.error('Error updating meal plan:', err);
-        return res.status(500).json({ error: 'Server error while updating meal plan' });
-      }
-
-      // Delete existing details for the meal plan
-      const deleteDetailsQuery = `DELETE FROM MealPlanDetail WHERE meal_plan_id = ?`;
-      db.query(deleteDetailsQuery, [mealPlanId], (err) => {
-        if (err) {
-          console.error('Error deleting old meal plan details:', err);
-          return res.status(500).json({ error: 'Server error while updating meal details' });
-        }
-
-        // Insert updated details
-        const mealPlanDetails = meals.map((meal) => [
-          mealPlanId,
-          meal.mealTime,
-          meal.dayOfWeek,
-          meal.foodId,
-          meal.quantity,
-        ]);
-
-        const insertMealPlanDetailsQuery = `
-          INSERT INTO MealPlanDetail (meal_plan_id, meal_time, day_of_week, food_id, quantity)
-          VALUES ?
-        `;
-        db.query(insertMealPlanDetailsQuery, [mealPlanDetails], (err) => {
-          if (err) {
-            console.error('Error inserting updated meal plan details:', err);
-            return res.status(500).json({ error: 'Server error while saving meal details' });
-          }
-          res.json({ success: true, message: 'Meal plan updated successfully' });
-        });
-      });
-    });
-  } else {
-    const getDeletedIdsQuery = `
-      SELECT id FROM MealPlan
-      WHERE id NOT IN (SELECT DISTINCT meal_plan_id FROM MealPlanDetail)
-      ORDER BY id ASC
-    `;
-
-    db.query(getDeletedIdsQuery, (err, results) => {
-      if (err) {
-        console.error('Error fetching deleted IDs:', err);
-        return res.status(500).json({ error: 'Server error while fetching deleted IDs' });
-      }
-
-      // Kiểm tra nếu có ID đã xóa
-      let newMealPlanId = null;
-      if (results.length > 0) {
-        newMealPlanId = results[0].id; // Lấy ID nhỏ nhất
-      }
-
-      const insertMealPlanQuery = newMealPlanId
-        ? `INSERT INTO MealPlan (id, date_range_start, date_range_end, people_count, children_count, total_cost) VALUES (?, ?, ?, ?, ?, ?)`
-        : `INSERT INTO MealPlan (date_range_start, date_range_end, people_count, children_count, total_cost) VALUES (?, ?, ?, ?, ?)`;
-
-      const insertValues = newMealPlanId
-        ? [newMealPlanId, dateRangeStart, dateRangeEnd, peopleCount, childrenCount, totalCost]
-        : [dateRangeStart, dateRangeEnd, peopleCount, childrenCount, totalCost];
-
-      db.query(insertMealPlanQuery, insertValues, (err, results) => {
-        if (err) {
-          console.error('Error creating new meal plan:', err);
-          return res.status(500).json({ error: 'Server error while creating new meal plan' });
-        }
-
-        if (!newMealPlanId) {
-          newMealPlanId = results.insertId; // Nếu không có ID tái sử dụng, lấy ID mới từ AUTO_INCREMENT
-        }
-
-        // Thêm chi tiết kế hoạch
-        const mealPlanDetails = meals.map((meal) => [
-          newMealPlanId,
-          meal.mealTime,
-          meal.dayOfWeek,
-          meal.foodId,
-          meal.quantity,
-        ]);
-
-        const insertMealPlanDetailsQuery = `
-          INSERT INTO MealPlanDetail (meal_plan_id, meal_time, day_of_week, food_id, quantity)
-          VALUES ?
-        `;
-        db.query(insertMealPlanDetailsQuery, [mealPlanDetails], (err) => {
-          if (err) {
-            console.error('Error adding meal plan details:', err);
-            return res.status(500).json({ error: 'Server error while saving meal details' });
-          }
-          res.json({ success: true, message: 'Meal plan created successfully', newMealPlanId });
-        });
-      });
-    });
-  }
-});
-
 app.delete('/delete-meal-plan/:id', (req, res) => {
   const id = toPositiveInt(req.params.id);
   if (!id) {
@@ -464,27 +443,6 @@ app.delete('/delete-meal-plan/:id', (req, res) => {
           res.json({ success: true, message: 'Meal plan deleted successfully' });
         });
       });
-    });
-  });
-});
-
-app.delete('/delete-meal-plan-legacy/:id', (req, res) => {
-  const { id } = req.params;
-
-  const deleteDetailsQuery = `DELETE FROM MealPlanDetail WHERE meal_plan_id = ?`;
-  db.query(deleteDetailsQuery, [id], (err) => {
-    if (err) {
-      console.error('Error deleting meal plan details:', err);
-      return res.status(500).json({ error: 'Server error while deleting meal plan details' });
-    }
-
-    const deleteMealPlanQuery = `DELETE FROM MealPlan WHERE id = ?`;
-    db.query(deleteMealPlanQuery, [id], (err) => {
-      if (err) {
-        console.error('Error deleting meal plan:', err);
-        return res.status(500).json({ error: 'Server error while deleting meal plan' });
-      }
-      res.json({ success: true, message: 'Meal plan deleted successfully' });
     });
   });
 });
@@ -559,7 +517,12 @@ app.get('/dishes', (req, res) => {
 
 // Thêm món ăn mới
 app.post('/dishes', (req, res) => {
-  const { name, image, description, price, calories } = req.body;
+  const validation = validateDishPayload(req.body);
+  if (validation.error) {
+    return res.status(400).json({ error: validation.error });
+  }
+
+  const { name, image, description, price, calories } = validation.value;
   const query = 'INSERT INTO FoodItems (name, image, description, price, calories) VALUES (?, ?, ?, ?, ?)';
   db.query(query, [name, image, description, price, calories], (err, results) => {
     if (err) return res.status(500).json({ error: 'Server error' });
@@ -569,8 +532,17 @@ app.post('/dishes', (req, res) => {
 
 // Cập nhật món ăn
 app.put('/dishes/:id', (req, res) => {
-  const { id } = req.params;
-  const { name, image, description, price, calories } = req.body;
+  const id = toPositiveInt(req.params.id);
+  if (!id) {
+    return res.status(400).json({ error: 'Dish ID is invalid' });
+  }
+
+  const validation = validateDishPayload(req.body);
+  if (validation.error) {
+    return res.status(400).json({ error: validation.error });
+  }
+
+  const { name, image, description, price, calories } = validation.value;
   const query = 'UPDATE FoodItems SET name = ?, image = ?, description = ?, price = ?, calories = ? WHERE Fid = ?';
   db.query(query, [name, image, description, price, calories, id], (err, results) => {
     if (err) return res.status(500).json({ error: 'Server error' });
@@ -580,27 +552,39 @@ app.put('/dishes/:id', (req, res) => {
 });
 
 app.delete('/dishes/:id', (req, res) => {
-  const { id } = req.params;
+  const id = toPositiveInt(req.params.id);
+  if (!id) {
+    return res.status(400).json({ error: 'Dish ID is invalid' });
+  }
 
-  // Xóa dữ liệu liên quan trước
-  const deleteIngredientsQuery = 'DELETE FROM fooditems_ingredient WHERE mid = ?';
-  db.query(deleteIngredientsQuery, [id], (err) => {
-    if (err) {
-      console.error('Error deleting related ingredients:', err);
+  db.query('SELECT COUNT(*) AS planUsage FROM MealPlanDetail WHERE food_id = ?', [id], (usageErr, usageRows) => {
+    if (usageErr) {
+      console.error('Error checking dish usage:', usageErr);
       return res.status(500).json({ error: 'Server error' });
     }
 
-    // Xóa món ăn
-    const deleteDishQuery = 'DELETE FROM FoodItems WHERE Fid = ?';
-    db.query(deleteDishQuery, [id], (err, results) => {
+    if (Number(usageRows[0]?.planUsage || 0) > 0) {
+      return res.status(409).json({ error: 'Dish is used in a meal plan and cannot be deleted' });
+    }
+
+    const deleteIngredientsQuery = 'DELETE FROM FoodItems_Ingredient WHERE mid = ?';
+    db.query(deleteIngredientsQuery, [id], (err) => {
       if (err) {
-        console.error('Error deleting dish:', err);
+        console.error('Error deleting related ingredients:', err);
         return res.status(500).json({ error: 'Server error' });
       }
-      if (results.affectedRows === 0) {
-        return res.status(404).json({ error: 'Dish not found' });
-      }
-      res.json({ success: true, message: 'Dish deleted successfully' });
+
+      const deleteDishQuery = 'DELETE FROM FoodItems WHERE Fid = ?';
+      db.query(deleteDishQuery, [id], (err, results) => {
+        if (err) {
+          console.error('Error deleting dish:', err);
+          return res.status(500).json({ error: 'Server error' });
+        }
+        if (results.affectedRows === 0) {
+          return res.status(404).json({ error: 'Dish not found' });
+        }
+        res.json({ success: true, message: 'Dish deleted successfully' });
+      });
     });
   });
 });
@@ -616,18 +600,24 @@ app.get('/ingredients', (req, res) => {
 
 // Lấy chi tiết món ăn theo ID
 app.get('/food-items/:id', (req, res) => {
-  const { id } = req.params;
+  const id = toPositiveInt(req.params.id);
+  if (!id) {
+    return res.status(400).json({ error: 'Food item ID is invalid' });
+  }
+
   const query = `
     SELECT fi.Fid, fi.name AS foodName, fi.image, fi.description, fi.price AS foodPrice, fi.calories AS foodCalories, 
            i.id AS ingredientId, i.name AS ingredientName, i.calories AS ingredientCalories, i.price AS ingredientPrice, 
            fi_ing.gram, fi_ing.totalCalo 
     FROM FoodItems AS fi
-    JOIN FoodItems_Ingredient AS fi_ing ON fi.Fid = fi_ing.mid
-    JOIN ingredients AS i ON fi_ing.Iid = i.id
+    LEFT JOIN FoodItems_Ingredient AS fi_ing ON fi.Fid = fi_ing.mid
+    LEFT JOIN ingredients AS i ON fi_ing.Iid = i.id
     WHERE fi.Fid = ?`;
 
   db.query(query, [id], (err, results) => {
-    if (err) return res.status(500).json({ error: 'Server error' });
+    if (err) {
+      return res.status(500).json({ error: 'Server error' });
+    }
 
     if (results.length === 0) return res.status(404).json({ error: 'Món ăn không tìm thấy' });
 
@@ -644,16 +634,18 @@ app.get('/food-items/:id', (req, res) => {
     };
 
     results.forEach(row => {
-      foodItem.ingredients.push({
-        ingredientId: row.ingredientId,
-        ingredientName: row.ingredientName,
-        ingredientCalories: row.ingredientCalories,
-        ingredientPrice: row.ingredientPrice,
-        gram: row.gram,
-        totalCalo: row.totalCalo
-      });
-      foodItem.totalCalories += row.totalCalo;
-      foodItem.totalPrice += (row.ingredientPrice * (row.gram / 1000)); // Giả sử giá là theo kg
+      if (row.ingredientId) {
+        foodItem.ingredients.push({
+          ingredientId: row.ingredientId,
+          ingredientName: row.ingredientName,
+          ingredientCalories: row.ingredientCalories,
+          ingredientPrice: row.ingredientPrice,
+          gram: row.gram,
+          totalCalo: row.totalCalo
+        });
+        foodItem.totalCalories += Number(row.totalCalo || 0);
+        foodItem.totalPrice += (Number(row.ingredientPrice || 0) * (Number(row.gram || 0) / 1000));
+      }
     });
 
     res.json(foodItem);
@@ -662,16 +654,30 @@ app.get('/food-items/:id', (req, res) => {
 
 // Add chi tiết món ăn
 app.post('/foodItems_ingredient', (req, res) => {  
-  const { mid, Iid, gram, totalCalo } = req.body;
+  const validation = validateFoodIngredientPayload(req.body);
+  if (validation.error) {
+    return res.status(400).json({ error: validation.error });
+  }
+
+  const { mid, Iid, gram, totalCalo } = validation.value;
   const query = 'INSERT INTO FoodItems_Ingredient (mid, Iid, gram, totalCalo) VALUES (?, ?, ?, ?)';
   db.query(query, [mid, Iid, gram, totalCalo], (err) => {
-    if (err) return res.status(500).json({ error: 'Server error' });
+    if (err) {
+      if (err.code === 'ER_DUP_ENTRY') {
+        return res.status(409).json({ error: 'Ingredient is already linked to this food item' });
+      }
+      return res.status(500).json({ error: 'Server error' });
+    }
     res.json({ success: true, message: 'Food item ingredient added' });
   });
 });
 
 app.delete('/foodItems_ingredient/:foodId', (req, res) => {
-  const { foodId } = req.params;
+  const foodId = toPositiveInt(req.params.foodId);
+  if (!foodId) {
+    return res.status(400).json({ error: 'Food item ID is invalid' });
+  }
+
   const query = 'DELETE FROM FoodItems_Ingredient WHERE mid = ?';
 
   db.query(query, [foodId], (err) => {
